@@ -82,6 +82,15 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	}
 
 
+	/**
+	 * Returns the complete URL to a file. This is not neccessarily the publicly available URL!
+	 *
+	 * @param t3lib_file_File $file
+	 * @return string
+	 */
+	protected function getFileUrl(t3lib_file_File $file) {
+		return $this->baseUrl . ltrim($file->getIdentifier(), '/');
+	}
 
 	/**
 	 * Returns the public URL to a file.
@@ -102,7 +111,16 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * TODO switch parameter order?
 	 */
 	public function hash(t3lib_file_File $file, $hashAlgorithm) {
-		// TODO: Implement hash() method.
+		// TODO add unit test
+		$fileCopy = $this->copyFileToTemporaryPath($file);
+
+		switch ($hashAlgorithm) {
+			case 'sha1':
+				return sha1_file($fileCopy);
+				break;
+		}
+
+		unlink($fileCopy);
 	}
 
 	/**
@@ -163,7 +181,12 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @return bool
 	 */
 	public function fileExists($identifier) {
-		// TODO: Implement fileExists() method.
+		$fileUrl = $this->baseUrl . ltrim($identifier, '/');
+		$result = $this->davClient->request('HEAD', $fileUrl);
+		print_r($result);
+
+		// TODO check if other status codes may also indicate that the file is present
+		return ($result['statusCode'] == 200);
 	}
 
 	/**
@@ -238,7 +261,24 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @return array
 	 */
 	public function getFileInfoByIdentifier($identifier) {
-		// TODO: Implement getFileInfoByIdentifier() method.
+		$fileUrl = $this->baseUrl . ltrim($identifier, '/');
+
+		$properties = $this->davClient->request('PROPFIND', $fileUrl);
+		$properties = $this->davClient->parseMultiStatus($properties['body']);
+		$properties = $properties[$this->basePath . ltrim($identifier, '/')][200];
+
+		// TODO make this more robust (check if properties are available etc.)
+		$fileInfo = array(
+			'mtime' => strtotime($properties['{DAV:}getlastmodified']),
+			'ctime' => strtotime($properties['{DAV:}creationdate']),
+			'mimetype' => $properties['{DAV:}getcontenttype'],
+			'name' => basename($identifier),
+			'size' => $properties['{DAV:}getcontentlength'],
+			'identifier' => $identifier,
+			'storage' => $this->storage->getUid()
+		);
+
+		return $fileInfo;
 	}
 
 	/**
@@ -327,79 +367,20 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	}
 
 	/**
-	 * Handler for items in a directory listing.
-	 *
-	 * @param DirectoryIterator $iteratorItem
-	 * @param string $path
-	 * @return array
-	 */
-	protected function getFolderList_itemCallback(DirectoryIterator $iteratorItem, $path) {
-		print_r($iteratorItem);
-		if (!$iteratorItem->isDir()) {
-			return array('', array());
-		}
-		if ($iteratorItem->getFilename() == '..' || $iteratorItem->getFilename() == '.') {
-			return array('', array());
-		}
-
-		return array($iteratorItem->getFilename(), array(
-			'name' => $iteratorItem->getFilename(),
-			'identifier' => $path . $iteratorItem->getFileName() . '/',
-			'creationDate' => $iteratorItem->getCTime(),
-			'storage' => $this->storage->getUid()
-			// TODO add more information
-		));
-	}
-
-	/**
-	 * Extracts information about a file from an SplFileInfo object.
-	 * TODO: Should be refactored into a more sensible function name. Low prio though, as it's a protcted functionof the local driver only
-	 *
-	 * @param SplFileInfo $splFileObject
-	 * @param string $containerPath
-	 * @return array
-	 */
-	protected function getFileInfo_Local(SplFileInfo $splFileObject, $containerPath) {
-
-		// TODO: Clean up.
-		// Note: Due to refactoring, the two functions getFileInfo and stat() have been combined. Therefore, the
-		// code below still doesn't look perfect and should be properly cleaned up. The function call to stat()
-		// shouldn't be necessary any more, because we already have the splFileObject, which has all the information needed
-
-		$filePath = $splFileObject->getPathname();
-		$fileStat = stat($filePath);
-		$fileInfo = new finfo();
-
-
-		$stat = array(
-			'size' => $fileStat['size'],
-			'atime' => $fileStat['atime'],
-			'mtime' => $fileStat['mtime'],
-			'ctime' => $fileStat['ctime'],
-			'nlink' => $fileStat['nlink'],
-			'mimetype' => $fileInfo->file($filePath, FILEINFO_MIME_TYPE),
-		);
-
-		$fileInfo = array(
-			'name' => $splFileObject->getFilename(),
-			'size' => $splFileObject->getSize(),
-			'identifier' => $containerPath . $splFileObject->getFilename(),
-			'creationDate' => $splFileObject->getCTime(),
-			'storage' => $this->storage->getUid()
-		);
-
-
-		return array_merge($stat, $fileInfo);
-	}
-
-	/**
 	 * Copies a file to a temporary path and returns that path.
 	 *
 	 * @param t3lib_file_File $file
 	 * @return string The temporary path
 	 */
 	public function copyFileToTemporaryPath(t3lib_file_File $file) {
-		// TODO: Implement copyFileToTemporaryPath() method.
+		// TODO add unit test
+		$temporaryPath = t3lib_div::tempnam('vfs-tempfile-');
+		$fileUrl = $this->getFileUrl($file);
+
+		$result = $this->davClient->request('GET', $fileUrl);
+		file_put_contents($temporaryPath, $result['body']);
+
+		return $temporaryPath;
 	}
 
 	/**
