@@ -367,13 +367,12 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	}
 
 	/**
-	 * Copies a file to a temporary path and returns that path.
+	 * Copies a file to a temporary path and returns that path. You have to take care of removing the temporary file yourself!
 	 *
 	 * @param t3lib_file_File $file
 	 * @return string The temporary path
 	 */
 	public function copyFileToTemporaryPath(t3lib_file_File $file) {
-		// TODO add unit test
 		$temporaryPath = t3lib_div::tempnam('vfs-tempfile-');
 		$fileUrl = $this->getFileUrl($file);
 

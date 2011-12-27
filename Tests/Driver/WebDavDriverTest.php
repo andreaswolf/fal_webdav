@@ -83,4 +83,23 @@ class Tx_FalWebdav_Driver_WebDavDriverTest extends t3lib_file_BaseTestCase {
 	public function createFolderReturnsObjectWithCorrectIdentifier(t3lib_file_Folder $folder) {
 		$this->assertEquals('/mainFolder/subFolder/', $folder->getIdentifier());
 	}
+
+	/**
+	 * @test
+	 */
+	public function copyFileToTemporaryPathCreatesLocalCopyOfFile() {
+		$fileContents = uniqid();
+
+		/** @var $clientMock Sabre_DAV_Client */
+		$clientMock = $this->mockDavClient();
+		$clientMock->expects($this->once())->method('request')->with($this->equalTo('GET'), $this->stringEndsWith('/mainFolder/file.txt'))
+			->will($this->returnValue(array('body' => $fileContents)));
+		$this->prepareFixture($clientMock);
+		$mockedFile = $this->getSimpleFileMock('/mainFolder/file.txt');
+
+		$temporaryPath = $this->fixture->copyFileToTemporaryPath($mockedFile);
+		$this->assertEquals($fileContents, file_get_contents($temporaryPath));
+
+		unlink($temporaryPath);
+	}
 }
