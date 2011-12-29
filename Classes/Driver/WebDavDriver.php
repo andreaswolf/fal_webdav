@@ -81,6 +81,21 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 		// TODO throw exception on error
 	}
 
+	/**
+	 * Checks if a given resource exists in this DAV share.
+	 *
+	 * @param string $resourcePath The path to the resource, i.e. a regular identifier as used everywhere else here.
+	 * @return bool
+	 */
+	protected function resourceExists($resourcePath) {
+		$url = $this->baseUrl . ltrim('/', $resourcePath);
+		$result = $this->davClient->request('HEAD', $url);
+		print_r($result);
+
+		// TODO check if other status codes may also indicate that the file is present
+		return ($result['statusCode'] == 200);
+	}
+
 
 	/**
 	 * Returns the complete URL to a file. This is not neccessarily the publicly available URL!
@@ -185,23 +200,19 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @return bool
 	 */
 	public function fileExists($identifier) {
-		$fileUrl = $this->baseUrl . ltrim($identifier, '/');
-		$result = $this->davClient->request('HEAD', $fileUrl);
-		print_r($result);
-
-		// TODO check if other status codes may also indicate that the file is present
-		return ($result['statusCode'] == 200);
+		return $this->resourceExists($identifier);
 	}
 
 	/**
 	 * Checks if a file inside a storage folder exists.
 	 *
-	 * @param string $fileName
-	 * @param t3lib_file_Folder $folder
-	 * @return bool
+	 * @param string $filth
 	 */
 	public function fileExistsInFolder($fileName, t3lib_file_Folder $folder) {
-		// TODO: Implement fileExistsInFolder() method.
+		// TODO add unit test
+		$fileIdentifier = $folder->getIdentifier() . $fileName;
+
+		return $this->resourceExists($fileIdentifier);
 	}
 
 	/**
@@ -509,23 +520,24 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	/**
 	 * Checks if a folder exists
 	 *
-	 * @param $identifier
+	 * @param string $identifier
 	 * @return bool
 	 */
 	public function folderExists($identifier) {
-		return TRUE;
-		// TODO: Implement folderExists() method.
+		// TODO add unit test
+		return $this->resourceExists($identifier);
 	}
 
 	/**
 	 * Checks if a file inside a storage folder exists.
 	 *
-	 * @param string $fileName
+	 * @param string $folderName
 	 * @param t3lib_file_Folder $folder
 	 * @return bool
 	 */
-	public function folderExistsInFolder($fileName, t3lib_file_Folder $folder) {
-		// TODO: Implement folderExistsInFolder() method.
+	public function folderExistsInFolder($folderName, t3lib_file_Folder $folder) {
+		$folderIdentifier = $folder->getIdentifier() . $folderName . '/';
+		return $this->resourceExists($folderIdentifier);
 	}
 
 	/**
