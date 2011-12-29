@@ -85,11 +85,15 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	/**
 	 * Returns the complete URL to a file. This is not neccessarily the publicly available URL!
 	 *
-	 * @param t3lib_file_File $file
+	 * @param string|t3lib_file_File $file The file object or its identifier
 	 * @return string
 	 */
-	protected function getFileUrl(t3lib_file_File $file) {
-		return $this->baseUrl . ltrim($file->getIdentifier(), '/');
+	protected function getFileUrl($file) {
+		if (is_object($file)) {
+			return $this->baseUrl . ltrim($file->getIdentifier(), '/');
+		} else {
+			return $this->baseUrl . ltrim($file, '/');
+		}
 	}
 
 	/**
