@@ -483,7 +483,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @return t3lib_file_Folder
 	 */
 	public function getRootLevelFolder() {
-		// TODO: Implement getRootLevelFolder() method.
+		return $this->getFolder('/');
 	}
 
 	/**
@@ -492,7 +492,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @return t3lib_file_Folder
 	 */
 	public function getDefaultFolder() {
-		// TODO: Implement getDefaultFolder() method.
+		return $this->getFolder('/');
 	}
 
 	/**
