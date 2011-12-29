@@ -282,16 +282,6 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	}
 
 	/**
-	 * Returns a file object by its identifier.
-	 *
-	 * @param $identifier
-	 * @return t3lib_file_File
-	 */
-	public function getFile($identifier) {
-		// TODO: Implement getFile() method.
-	}
-
-	/**
 	 * Returns a list of files inside the specified path
 	 *
 	 * @param string $path
