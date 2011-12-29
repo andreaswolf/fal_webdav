@@ -319,7 +319,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 				$files[$filename] = array(
 					'name' => $filename,
 					'identifier' => $path . $filename,
-					'creationDate' => time(),
+					'creationDate' => strtotime($properties['{DAV:}creationdate']),
 					'storage' => $this->storage->getUid()
 				);
 			}
@@ -358,7 +358,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 				$folders[$filename] = array(
 					'name' => $filename,
 					'identifier' => $path . trim($filename, '/') . '/',
-					'creationDate' => time(),
+					'creationDate' => strtotime($properties['{DAV:}creationdate']),
 					'storage' => $this->storage->getUid()
 				);
 			}
