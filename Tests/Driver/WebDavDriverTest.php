@@ -102,4 +102,37 @@ class Tx_FalWebdav_Driver_WebDavDriverTest extends t3lib_file_BaseTestCase {
 
 		unlink($temporaryPath);
 	}
+
+	public function isWithin_dataProvider() {
+		return array(
+			'file in folder' => array(
+				'/someFolder',
+				'/someFolder/file',
+				TRUE
+			),
+			'file within subfolder' => array(
+				'/someFolder',
+				'/someFolder/someOtherFolder/file',
+				TRUE
+			),
+			'file in root folder' => array(
+				'/',
+				'/file',
+				TRUE
+			)
+		);
+	}
+
+	/**
+	 * @test
+	 * @dataProvider isWithin_dataProvider
+	 */
+	public function isWithinCorrectlyDetectsPaths($containerPath, $contentPath, $expectedResult) {
+		$mockedFolder = $this->getSimpleFolderMock($containerPath);
+		$this->prepareFixture();
+
+		$actualResult = $this->fixture->isWithin($mockedFolder, $contentPath);
+
+		$this->assertEquals($expectedResult, $actualResult);
+	}
 }

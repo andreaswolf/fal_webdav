@@ -145,12 +145,12 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	/**
 	 * Creates a new file and returns the matching file object for it.
 	 *
-	 * @param t3lib_file_Folder $folder
 	 * @param string $fileName
+	 * @param t3lib_file_Folder $parentFolder
 	 * @return t3lib_file_File
 	 */
-	public function createFile(t3lib_file_Folder $folder, $fileName) {
-		$filePath = $folder->getIdentifier() . $fileName;
+	public function createFile($fileName, t3lib_file_Folder $parentFolder) {
+		$filePath = $parentFolder->getIdentifier() . $fileName;
 		$fileUrl = $this->baseUrl . ltrim($filePath, '/');
 
 		$this->davClient->request('PUT', $fileUrl, '');
@@ -169,7 +169,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	}
 
 	/**
-	 * Sets the contents of a file to the specified value. This also updates the file properties
+	 * Sets the contents of a file to the specified value.
 	 *
 	 * @param t3lib_file_File $file
 	 * @param string $contents
@@ -191,6 +191,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 */
 	public function addFile($localFilePath, t3lib_file_Folder $targetFolder = NULL, $fileName = NULL) {
 		// TODO: Implement addFile() method.
+		// TODO check if we can use streams in conjunction with cURL
 	}
 
 	/**
@@ -224,7 +225,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @return string The path to the file on the local disk
 	 */
 	public function getFileForLocalProcessing(t3lib_file_File $file, $writable = TRUE) {
-		// TODO: Implement getFileForLocalProcessing() method.
+		return $this->copyFileToTemporaryPath($file);
 	}
 
 	/**
@@ -255,7 +256,13 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @return string The new identifier of the file
 	 */
 	public function renameFile(t3lib_file_File $file, $newName) {
-		// TODO: Implement renameFile() method.
+		// TODO add unit test
+		// Renaming works by invoking the MOVE method on the source URL and providing the new destination in the
+		// "Destination:" HTTP header.
+		$sourceUrl = $this->baseUrl . ltrim($file->getIdentifier(), '/');
+		$targetPath = $this->basePath . ltrim(dirname($file->getIdentifier()), '/') . '/' . $newName;
+
+		$this->davClient->request('MOVE', $sourceUrl, NULL, array('Destination' => $targetPath));
 	}
 
 	/**
@@ -331,6 +338,10 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 		}
 		return $files;
 		//return $this->getDirectoryItemList($path, 'getFileList_itemCallback');
+	}
+
+	protected function getFileInformationFromPropertiesArray(array $properties) {
+		// TODO implement and call from getFileList()
 	}
 
 	/**
@@ -546,10 +557,47 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 *
 	 * @param t3lib_file_Folder $container
 	 * @param string $content
-	 * @return void
+	 * @return bool
 	 */
 	public function isWithin(t3lib_file_Folder $container, $content) {
-		// TODO: Implement isWithin() method.
+		// TODO extend this to also support objects as $content
+		$folderPath = $container->getIdentifier();
+		$content = '/' . ltrim($content, '/');
+
+		return t3lib_div::isFirstPartOfStr($content, $folderPath);
+	}
+
+	/**
+	 * Removes a folder from this storage.
+	 *
+	 * @param t3lib_file_Folder $folder
+	 * @param bool $deleteRecursively
+	 * @return boolean
+	 */
+	public function deleteFolder(t3lib_file_Folder $folder, $deleteRecursively = FALSE) {
+		// TODO: Implement deleteFolder() method.
+	}
+
+	/**
+	 * Renames a folder in this storage.
+	 *
+	 * @param t3lib_file_Folder $folder
+	 * @param string $newName The target path (including the file name!)
+	 * @return string The new identifier of the folder if the operation succeeds
+	 * @throws RuntimeException if renaming the folder failed
+	 */
+	public function renameFolder(t3lib_file_Folder $folder, $newName) {
+		// TODO: Implement renameFolder() method.
+	}
+
+	/**
+	 * Checks if a folder contains files and (if supported) other folders.
+	 *
+	 * @param t3lib_file_Folder $folder
+	 * @return bool TRUE if there are no files and folders within $folder
+	 */
+	public function isFolderEmpty(t3lib_file_Folder $folder) {
+		// TODO: Implement isFolderEmpty() method.
 	}
 
 }
