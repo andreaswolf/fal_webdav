@@ -359,7 +359,6 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 			$items[$key] = $entry;
 		}
 
-		ksort($items);
 		return $items;
 	}
 
