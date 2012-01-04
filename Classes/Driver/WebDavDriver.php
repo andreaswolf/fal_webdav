@@ -552,9 +552,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 		$folderPath = $parentFolder->getIdentifier() . $newFolderName . '/';
 		$folderUrl = $this->baseUrl . ltrim($folderPath, '/');
 
-		// TODO check if parent folder exists
-
-		$this->davClient->request('MKCOL', $folderUrl, '');
+		$this->davClient->request('MKCOL', $folderUrl);
 
 		/** @var $factory t3lib_file_Factory */
 		$factory = t3lib_div::makeInstance('t3lib_file_Factory');

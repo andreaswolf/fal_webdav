@@ -65,10 +65,10 @@ class Tx_FalWebdav_Driver_WebDavDriverTest extends t3lib_file_BaseTestCase {
 	 * @test
 	 * @return t3lib_file_Folder
 	 */
-	public function createFolderIssuesCorrectCommandOnServer() {
+	public function createFolderIssuesCorrectCreateCommandOnServer() {
 		/** @var $clientMock Sabre_DAV_Client */
 		$clientMock = $this->mockDavClient();
-		$clientMock->expects($this->once())->method('request')->with($this->equalTo('MKCOL'), $this->stringEndsWith('/mainFolder/subFolder/'));
+		$clientMock->expects($this->at(0))->method('request')->with($this->equalTo('MKCOL'), $this->stringEndsWith('/mainFolder/subFolder/'));
 		$this->prepareFixture($clientMock);
 		$mockedFolder = $this->getSimpleFolderMock('/mainFolder/');
 
@@ -77,7 +77,7 @@ class Tx_FalWebdav_Driver_WebDavDriverTest extends t3lib_file_BaseTestCase {
 
 	/**
 	 * @test
-	 * @depends createFolderIssuesCorrectCommandOnServer
+	 * @depends createFolderIssuesCorrectCreateCommandOnServer
 	 * @param t3lib_file_Folder $folder
 	 */
 	public function createFolderReturnsObjectWithCorrectIdentifier(t3lib_file_Folder $folder) {
