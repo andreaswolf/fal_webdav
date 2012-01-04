@@ -314,34 +314,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	// TODO implement pattern matching
 	// TODO implement limits
 	public function getFileList($path, $pattern = '') {
-			// TODO refactor this into an own method
-		$url = $this->baseUrl . ltrim($path, '/');
-		$basePath = $this->basePath . ltrim($path, '/');
-		$properties = $this->davPropFind($url);
-
-		// TODO handle errors
-
-			// TODO refactor this into an own method
-		foreach ($properties as $filePath => $item) {
-				// no folder => file TODO is this really true?
-			if (!$item['{DAV:}resourcetype']->is('{DAV:}collection')) {
-				$filename = substr($filePath, strlen($basePath));
-
-					// TODO add more items
-				$files[$filename] = array(
-					'name' => $filename,
-					'identifier' => $path . $filename,
-					'creationDate' => strtotime($properties['{DAV:}creationdate']),
-					'storage' => $this->storage->getUid()
-				);
-			}
-		}
-		return $files;
-		//return $this->getDirectoryItemList($path, 'getFileList_itemCallback');
-	}
-
-	protected function getFileInformationFromPropertiesArray(array $properties) {
-		// TODO implement and call from getFileList()
+		return $this->getDirectoryItemList($path, $pattern, 'getFileList_itemCallback');
 	}
 
 	/**
@@ -353,33 +326,93 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 */
 	// TODO implement pattern matching
 	public function getFolderList($path, $pattern = '') {
-			// TODO refactor this into an own method
+		return $this->getDirectoryItemList($path, $pattern, 'getFolderList_itemCallback');
+	}
+
+	/**
+	 * Generic handler method for directory listings - gluing together the listing items is done
+	 *
+	 * @param string $path
+	 * @param string $pattern
+	 * @param callback $itemHandlerMethod
+	 * @return array
+	 */
+	// TODO implement pattern matching
+	protected function getDirectoryItemList($path, $pattern, $itemHandlerMethod) {
 		$url = $this->baseUrl . ltrim($path, '/');
 		$basePath = $this->basePath . ltrim($path, '/');
 		$properties = $this->davPropFind($url);
 
 		// TODO handle errors
 
-		// TODO refactor this into an own method
-		$folders = array();
-		foreach ($properties as $filePath => $item) {
-			if ($item['{DAV:}resourcetype']->is('{DAV:}collection')) {
-				$filename = trim(substr($filePath, strlen($basePath)), '/');
-
-				if ($filename == '') {
-					continue;
-				}
-
-					// TODO add more items
-				$folders[$filename] = array(
-					'name' => $filename,
-					'identifier' => $path . trim($filename, '/') . '/',
-					'creationDate' => strtotime($properties['{DAV:}creationdate']),
-					'storage' => $this->storage->getUid()
-				);
-			}
+		if ($path !== '' && $path != '/') {
+			$path = '/' . trim($path, '/') . '/';
 		}
-		return $folders;
+
+		$items = array();
+		foreach ($properties as $filePath => $item) {
+			list($key, $entry) = $this->$itemHandlerMethod($item, $filePath, $basePath, $path);
+
+			if (empty($entry)) {
+				continue;
+			}
+			$items[$key] = $entry;
+		}
+
+		ksort($items);
+		return $items;
+	}
+
+	/**
+	 * Callback method that extracts file information from a single entry inside a DAV PROPFIND response. Called by getDirectoryItemList.
+	 *
+	 * @param array $item
+	 * @param string $filePath
+	 * @param string $basePath
+	 * @param string $path
+	 * @return array
+	 */
+	protected function getFileList_itemCallback(array $item, $filePath, $basePath, $path) {
+		if ($item['{DAV:}resourcetype']->is('{DAV:}collection')) {
+			return array('', array());
+		}
+		$fileName = substr($filePath, strlen($basePath));
+
+			// TODO add more items
+		return array($fileName, array(
+			'name' => $fileName,
+			'identifier' => $path . $fileName,
+			'creationDate' => strtotime($item['{DAV:}creationdate']),
+			'storage' => $this->storage->getUid()
+		));
+	}
+
+	/**
+	 * Callback method that extracts folder information from a single entry inside a DAV PROPFIND response. Called by getDirectoryItemList.
+	 *
+	 * @param array $item
+	 * @param string $filePath
+	 * @param string $basePath
+	 * @param string $path
+	 * @return array
+	 */
+	protected function getFolderList_itemCallback(array $item, $filePath, $basePath, $path) {
+		if (!$item['{DAV:}resourcetype']->is('{DAV:}collection')) {
+			return array('', array());
+		}
+		$folderName = trim(substr($filePath, strlen($basePath)), '/');
+
+		if ($folderName == '') {
+			return array('', array());
+		}
+
+			// TODO add more items
+		return array($folderName, array(
+			'name' => $folderName,
+			'identifier' => $path . trim($folderName, '/') . '/',
+			'creationDate' => strtotime($item['{DAV:}creationdate']),
+			'storage' => $this->storage->getUid()
+		));
 	}
 
 	/**
