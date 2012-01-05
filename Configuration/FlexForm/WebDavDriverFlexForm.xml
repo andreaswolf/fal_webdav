@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<T3DataStructure>
+	<meta>
+		<langDisable>1</langDisable>
+	</meta>
+	<ROOT>
+		<type>array</type>
+		<el>
+			<baseUrl>
+				<TCEforms>
+					<label>WebDAV URL:</label>
+					<config>
+						<type>input</type>
+						<default>http://user:pass@webdav.domain.com/path/</default>
+						<size>30</size>
+					</config>
+				</TCEforms>
+			</baseUrl>
+		</el>
+	</ROOT>
+</T3DataStructure>

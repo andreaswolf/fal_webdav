@@ -40,12 +40,17 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	}
 
 	protected function processConfiguration() {
-		$this->baseUrl = 'http://localhost/typo3-fal/webdav-root/';
+		$this->baseUrl = $this->configuration['baseUrl'];
 		$urlInfo = parse_url($this->baseUrl);
-		$this->basePath = $urlInfo['path'];
+		if ($urlInfo === FALSE) {
+			throw new InvalidArgumentException('Invalid base URL configured for WebDAV driver: ' . $this->configuration['baseUrl'], 1325771040);
+		}
+		$this->basePath = rtrim($urlInfo['path'], '/') . '/';
 
 		$settings = array(
-			'baseUri' => $this->baseUrl
+			'baseUri' => $this->baseUrl,
+			'userName' => $urlInfo['user'],
+			'password' => $urlInfo['pass']
 		);
 
 		$this->davClient = new Sabre_DAV_Client($settings);
