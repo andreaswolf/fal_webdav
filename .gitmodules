@@ -1,0 +1,3 @@
+[submodule "Resources/Php/SabreDAV"]
+	path = Resources/Php/SabreDAV
+	url = git://github.com/andreaswolf/SabreDAV.git
