@@ -12,7 +12,8 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	protected $baseUrl;
 
 	/**
-	 * The base path of the WebDAV store. This is the URL without protocol, host and port (i.e., only the path on the host)
+	 * The base path of the WebDAV store. This is the URL without protocol, host and port (i.e., only the path on the host).
+	 * Always ends with a trailing slash.
 	 *
 	 * @var string
 	 */
@@ -93,22 +94,27 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @return bool
 	 */
 	protected function resourceExists($resourcePath) {
-		$url = $this->baseUrl . ltrim('/', $resourcePath);
-		$result = $this->davClient->request('HEAD', $url);
-		print_r($result);
-
+		if ($resourcePath == '') {
+			throw new InvalidArgumentException('Resource path cannot be empty');
+		}
+		$url = $this->baseUrl . ltrim($resourcePath, '/');
+		try {
+			$this->davClient->request('HEAD', $url);
+		} catch (Sabre_DAV_Exception_NotFound $exception) {
+			return FALSE;
+		}
 		// TODO check if other status codes may also indicate that the file is present
-		return ($result['statusCode'] == 200);
+		return TRUE;
 	}
 
 
 	/**
-	 * Returns the complete URL to a file. This is not neccessarily the publicly available URL!
+	 * Returns the complete URL to a file. This is not necessarily the publicly available URL!
 	 *
 	 * @param string|t3lib_file_File $file The file object or its identifier
 	 * @return string
 	 */
-	protected function getFileUrl($file) {
+	protected function getResourceUrl($file) {
 		if (is_object($file)) {
 			return $this->baseUrl . ltrim($file->getIdentifier(), '/');
 		} else {
@@ -427,7 +433,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 */
 	public function copyFileToTemporaryPath(t3lib_file_File $file) {
 		$temporaryPath = t3lib_div::tempnam('vfs-tempfile-');
-		$fileUrl = $this->getFileUrl($file);
+		$fileUrl = $this->getResourceUrl($file);
 
 		$result = $this->davClient->request('GET', $fileUrl);
 		file_put_contents($temporaryPath, $result['body']);
