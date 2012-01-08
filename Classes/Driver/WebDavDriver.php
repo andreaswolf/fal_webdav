@@ -731,7 +731,11 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @return bool TRUE if there are no files and folders within $folder
 	 */
 	public function isFolderEmpty(t3lib_file_Folder $folder) {
-		// TODO: Implement isFolderEmpty() method.
+		$folderUrl = $this->getResourceUrl($folder);
+
+		$folderContents = $this->davPropFind($folderUrl);
+
+		return (count($folderContents) == 1);
 	}
 
 }
