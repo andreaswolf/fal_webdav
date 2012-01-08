@@ -304,7 +304,11 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @return bool
 	 */
 	public function replaceFile(t3lib_file_File $file, $localFilePath) {
-		// TODO: Implement replaceFile() method.
+		// TODO use streams
+		$fileUrl = $this->getResourceUrl($file);
+		$fileContents = file_get_contents($localFilePath);
+
+		$this->davClient->request('PUT', $fileUrl, $fileContents);
 	}
 
 	/**
@@ -520,10 +524,16 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * it for some other reason - this has to be taken care of in the upper layers (e.g. the Storage)!
 	 *
 	 * @param t3lib_file_File $file
-	 * @return void
+	 * @return boolean TRUE if the operation succeeded
 	 */
 	public function deleteFile(t3lib_file_File $file) {
-		// TODO: Implement deleteFile() method.
+		// TODO add unit tests
+		$fileUrl = $this->baseUrl . ltrim($file->getIdentifier(), '/');
+
+		$result = $this->davClient->request('DELETE', $fileUrl);
+
+		// 204 is derived from the answer Apache gives - there might be other status codes that indicate success
+		return ($result['statusCode'] == 204);
 	}
 
 	/**
