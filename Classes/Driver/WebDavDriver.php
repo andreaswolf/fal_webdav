@@ -161,10 +161,12 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @return t3lib_file_File
 	 */
 	public function createFile($fileName, t3lib_file_Folder $parentFolder) {
-		$filePath = $parentFolder->getIdentifier() . $fileName;
-		$fileUrl = $this->baseUrl . ltrim($filePath, '/');
+		$fileIdentifier = $parentFolder->getIdentifier() . $fileName;
+		$fileUrl = $this->baseUrl . ltrim($fileIdentifier, '/');
 
 		$this->davClient->request('PUT', $fileUrl, '');
+
+		return $this->getFile($fileIdentifier);
 	}
 
 	/**
