@@ -69,6 +69,22 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 		// TODO: Implement verifyConfiguration() method.
 	}
 
+	/**
+	 * Executes a MOVE request from $oldPath to $newPath.
+	 *
+	 * @param string $oldPath
+	 * @param string $newPath
+	 * @return array The result as returned by SabreDAV
+	 */
+	public function executeMoveRequest($oldPath, $newPath) {
+		$oldUrl = $this->baseUrl . ltrim($oldPath, '/');
+		$newUrl = $this->baseUrl . ltrim($newPath, '/');
+
+			// force overwriting the file (header Overwrite: T) because the Storage already handled possible conflicts
+			// for us
+		return $this->davClient->request('MOVE', $oldUrl, NULL, array('Destination' => $newUrl, 'Overwrite' => 'T'));
+	}
+
 
 
 	/**
@@ -290,10 +306,12 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 		// TODO add unit test
 		// Renaming works by invoking the MOVE method on the source URL and providing the new destination in the
 		// "Destination:" HTTP header.
-		$sourceUrl = $this->baseUrl . ltrim($file->getIdentifier(), '/');
-		$targetPath = $this->basePath . ltrim(dirname($file->getIdentifier()), '/') . '/' . $newName;
+		$sourcePath = $file->getIdentifier();
+		$targetPath = dirname($file->getIdentifier()) . '/' . $newName;
 
-		$this->davClient->request('MOVE', $sourceUrl, NULL, array('Destination' => $targetPath));
+		$this->executeMoveRequest($sourcePath, $targetPath);
+
+		return $targetPath;
 	}
 
 	/**
@@ -475,8 +493,20 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @param string $fileName
 	 * @return string The new identifier of the file
 	 */
-	public function moveFileWithinStorage(t3lib_file_File $file, t3lib_file_Folder $targetFolder, $fileName = NULL) {
-		// TODO: Implement moveFileWithinStorage() method.
+	public function moveFileWithinStorage(t3lib_file_File $file, t3lib_file_Folder $targetFolder, $fileName) {
+		$newPath = $targetFolder->getIdentifier() . $fileName;
+
+		try {
+			$result = $this->executeMoveRequest($file->getIdentifier(), $newPath);
+		} catch (Sabre_DAV_Exception $e) {
+			// TODO insert correct exception here
+			throw new t3lib_file_exception_AbstractFileOperationException('Moving file ' . $file->getIdentifier()
+				. ' to ' . $newPath . ' failed.', 1325848030);
+		}
+		// TODO check if there are some return codes that signalize an error, but do not throw an exception
+		// status codes: 204: file was overwritten; 201: file was created;
+
+		return $targetFolder->getIdentifier() . $fileName;
 	}
 
 	/**
@@ -489,8 +519,24 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @param string $fileName
 	 * @return t3lib_file_File The new (copied) file object.
 	 */
-	public function copyFileWithinStorage(t3lib_file_File $file, t3lib_file_Folder $targetFolder, $fileName = NULL) {
-		// TODO: Implement copyFileWithinStorage() method.
+	public function copyFileWithinStorage(t3lib_file_File $file, t3lib_file_Folder $targetFolder, $fileName) {
+		$oldFileUrl = $this->getResourceUrl($file);
+		$newFileUrl = $this->getResourceUrl($targetFolder) . $fileName;
+		$newFileIdentifier = $targetFolder->getIdentifier() . $fileName;
+
+		try {
+				// force overwriting the file (header Overwrite: T) because the Storage already handled possible conflicts
+				// for us
+			$result = $this->davClient->request('COPY', $oldFileUrl, NULL, array('Destination' => $newFileUrl, 'Overwrite' => 'T'));
+		} catch (Sabre_DAV_Exception $e) {
+			// TODO insert correct exception here
+			throw new t3lib_file_exception_AbstractFileOperationException('Copying file ' . $file->getIdentifier() . ' to '
+				. $newFileIdentifier . ' failed.', 1325848030);
+		}
+		// TODO check if there are some return codes that signalize an error, but do not throw an exception
+		// status codes: 204: file was overwritten; 201: file was created;
+
+		return $this->getFile($newFileIdentifier);
 	}
 
 	/**
