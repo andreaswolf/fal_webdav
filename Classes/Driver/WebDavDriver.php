@@ -178,7 +178,11 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @return string The file contents
 	 */
 	public function getFileContents(t3lib_file_File $file) {
-		// TODO: Implement getFileContents() method.
+		$fileUrl = $this->baseUrl . ltrim($file->getIdentifier(), '/');
+
+		$result = $this->davClient->request('GET', $fileUrl);
+
+		return $result['body'];
 	}
 
 	/**
@@ -186,10 +190,16 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 *
 	 * @param t3lib_file_File $file
 	 * @param string $contents
-	 * @return t3lib_file_File
+	 * @return bool TRUE if setting the contents succeeded
+	 * @throws RuntimeException if the operation failed
 	 */
 	public function setFileContents(t3lib_file_File $file, $contents) {
-		// TODO: Implement setFileContents() method.
+		// Apache returns a "204 no content" status after a successful put operation
+
+		$fileUrl = $this->getResourceUrl($file);
+		$result = $this->davClient->request('PUT', $fileUrl, $contents);
+
+		// TODO check result
 	}
 
 	/**
