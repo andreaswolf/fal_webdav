@@ -325,11 +325,13 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @return bool
 	 */
 	public function replaceFile(t3lib_file_File $file, $localFilePath) {
-		// TODO use streams
 		$fileUrl = $this->getResourceUrl($file);
-		$fileContents = file_get_contents($localFilePath);
+		$fileHandle = fopen($localFilePath, 'r');
+		if (!is_resource($fileHandle)) {
+			throw new RuntimeException('Could not open handle for ' . $localFilePath, 1325959311);
+		}
 
-		$this->davClient->request('PUT', $fileUrl, $fileContents);
+		$this->davClient->request('PUT', $fileUrl, $fileHandle);
 	}
 
 	/**
