@@ -692,19 +692,33 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @return boolean
 	 */
 	public function deleteFolder(t3lib_file_Folder $folder, $deleteRecursively = FALSE) {
-		// TODO: Implement deleteFolder() method.
+		$folderUrl = $this->getResourceUrl($folder);
+
+			// We don't need to specify a depth header when deleting (see sect. 9.6.1 of RFC #4718)
+		$this->davClient->request('DELETE', $folderUrl, '', array());
 	}
 
 	/**
 	 * Renames a folder in this storage.
 	 *
 	 * @param t3lib_file_Folder $folder
-	 * @param string $newName The target path (including the file name!)
+	 * @param string $newName The new folder name
 	 * @return string The new identifier of the folder if the operation succeeds
 	 * @throws RuntimeException if renaming the folder failed
 	 */
 	public function renameFolder(t3lib_file_Folder $folder, $newName) {
-		// TODO: Implement renameFolder() method.
+		$sourcePath = $folder->getIdentifier();
+		$targetPath = dirname($folder->getIdentifier()) . '/' . $newName . '/';
+
+		try {
+			$result = $this->executeMoveRequest($sourcePath, $targetPath);
+		} catch (Sabre_DAV_Exception $e) {
+			// TODO insert correct exception here
+			throw new t3lib_file_exception_AbstractFileOperationException('Renaming ' . $sourcePath . ' to '
+				. $targetPath . ' failed.', 1325848030);
+		}
+
+		return $targetPath;
 	}
 
 	/**
