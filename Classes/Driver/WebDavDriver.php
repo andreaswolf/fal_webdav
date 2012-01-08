@@ -209,12 +209,20 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 *
 	 * @param string $localFilePath
 	 * @param t3lib_file_Folder $targetFolder
-	 * @param string $fileName The fileName. If this is not set, the local fileName is used
+	 * @param string $fileName The name to add the file under
 	 * @return t3lib_file_File
 	 */
-	public function addFile($localFilePath, t3lib_file_Folder $targetFolder = NULL, $fileName = NULL) {
-		// TODO: Implement addFile() method.
-		// TODO check if we can use streams in conjunction with cURL
+	public function addFile($localFilePath, t3lib_file_Folder $targetFolder, $fileName) {
+		$fileIdentifier = $targetFolder->getIdentifier() . $fileName;
+		$fileUrl = $this->baseUrl . ltrim($fileIdentifier);
+
+		$fileHandle = fopen($localFilePath, 'r');
+		if (!is_resource($fileHandle)) {
+			throw new RuntimeException('Could not open handle for ' . $localFilePath, 1325959310);
+		}
+		$result = $this->davClient->request('PUT', $fileUrl, $fileHandle);
+
+		return $this->getFile($fileIdentifier);
 	}
 
 	/**
