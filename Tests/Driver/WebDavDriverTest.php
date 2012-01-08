@@ -33,6 +33,15 @@ class Tx_FalWebdav_Driver_WebDavDriverTest extends t3lib_file_BaseTestCase {
 	 */
 	private $fixture;
 
+	/**
+	 * @var string
+	 */
+	private $baseUrl;
+
+	public function setUp() {
+		$this->baseUrl = 'http://example.org/webdav-root/';
+	}
+
 	protected function mockDavClient() {
 		return $this->getMock('Sabre_DAV_Client', array(), array(), '', FALSE);
 	}
@@ -42,7 +51,7 @@ class Tx_FalWebdav_Driver_WebDavDriverTest extends t3lib_file_BaseTestCase {
 			$client = $this->mockDavClient();
 		}
 
-		$this->fixture = new Tx_FalWebdav_Driver_WebDavDriver();
+		$this->fixture = new Tx_FalWebdav_Driver_WebDavDriver(array('baseUrl' => $this->baseUrl));
 		$this->fixture->injectDavClient($client);
 		$this->fixture->setStorage($this->getMock('t3lib_file_Storage', array(), array(), '', FALSE));
 		$this->fixture->initialize();
@@ -58,7 +67,7 @@ class Tx_FalWebdav_Driver_WebDavDriverTest extends t3lib_file_BaseTestCase {
 		$this->prepareFixture($clientMock);
 		$mockedFolder = $this->getSimpleFolderMock('/');
 
-		$this->fixture->createFile($mockedFolder, 'someFile');
+		$this->fixture->createFile('someFile', $mockedFolder);
 	}
 
 	/**
@@ -103,6 +112,28 @@ class Tx_FalWebdav_Driver_WebDavDriverTest extends t3lib_file_BaseTestCase {
 		unlink($temporaryPath);
 	}
 
+	/**
+	 * @test
+	 */
+	public function moveFileWithinStorageIssuesCorrectCommand() {
+		$mockedFile = $this->getSimpleFileMock('/someFile');
+		$mockedFolder = $this->getSimpleFolderMock('/targetFolder/');
+
+		/** @var $clientMock Sabre_DAV_Client */
+		$clientMock = $this->mockDavClient();
+			// TODO make the parameter matching here more special as soon as PHPUnit supports doing so
+		$clientMock->expects($this->once())->method('request')->with($this->equalTo('MOVE'), $this->stringEndsWith('/someFile'),
+			NULL, $this->logicalAnd($this->contains($this->baseUrl . 'targetFolder/movedFile'), $this->contains('T')));
+		$this->prepareFixture($clientMock);
+
+		$newFileIdentifier = $this->fixture->moveFileWithinStorage($mockedFile, $mockedFolder, 'movedFile');
+
+		$this->assertEquals('/targetFolder/movedFile', $newFileIdentifier);
+	}
+
+	/**
+	 * @return array
+	 */
 	public function isWithin_dataProvider() {
 		return array(
 			'file in folder' => array(
@@ -134,5 +165,45 @@ class Tx_FalWebdav_Driver_WebDavDriverTest extends t3lib_file_BaseTestCase {
 		$actualResult = $this->fixture->isWithin($mockedFolder, $contentPath);
 
 		$this->assertEquals($expectedResult, $actualResult);
+	}
+
+	/**
+	 * @test
+	 */
+	public function setFileContentsIssuesCorrectCommandOnServer() {
+		$fileContents = uniqid();
+		/** @var $clientMock Sabre_DAV_Client */
+		$clientMock = $this->mockDavClient();
+		$clientMock->expects($this->once())->method('request')->with($this->equalTo('PUT'), $this->stringEndsWith('/someFile'), $fileContents);
+		$this->prepareFixture($clientMock);
+		$mockedFile = $this->getSimpleFileMock('/someFile');
+
+		$this->fixture->setFileContents($mockedFile, $fileContents);
+	}
+
+	/**
+	 * @test
+	 */
+	public function getPublicUrlReturnsCorrectUrlIfStorageIsPublic() {
+		$this->prepareFixture();
+		$this->fixture->getStorage()->expects($this->any())->method('isPublic')->will($this->returnValue(TRUE));
+
+		$mockedFile = $this->getSimpleFileMock('/someFolder/someFile.jpg');
+
+		$this->fixture->getPublicUrl($mockedFile);
+	}
+
+	/**
+	 * @test
+	 */
+	public function deleteFolderIssuesCorrectCommandOnServer() {
+		/** @var $clientMock Sabre_DAV_Client */
+		$clientMock = $this->mockDavClient();
+		$clientMock->expects($this->once())->method('request')->with($this->equalTo('DELETE'), $this->stringEndsWith('/someFolder/'),
+			$this->contains('Infinity'));
+		$this->prepareFixture($clientMock);
+		$mockedFolder = $this->getSimpleFolderMock('/someFolder/');
+
+		$this->fixture->deleteFolder($mockedFolder);
 	}
 }
