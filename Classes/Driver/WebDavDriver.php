@@ -127,7 +127,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	/**
 	 * Returns the complete URL to a file. This is not necessarily the publicly available URL!
 	 *
-	 * @param string|t3lib_file_File $file The file object or its identifier
+	 * @param string|t3lib_file_File|t3lib_file_Folder $file The file object or its identifier
 	 * @return string
 	 */
 	protected function getResourceUrl($file) {
@@ -257,7 +257,9 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	/**
 	 * Checks if a file inside a storage folder exists.
 	 *
-	 * @param string $filth
+	 * @param string $fileName
+	 * @param t3lib_file_Folder $folder
+	 * @return boolean
 	 */
 	public function fileExistsInFolder($fileName, t3lib_file_Folder $folder) {
 		// TODO add unit test
