@@ -576,11 +576,23 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @param t3lib_file_Folder $folderToMove
 	 * @param t3lib_file_Folder $targetFolder
 	 * @param string $newFolderName
-	 * @return bool
+	 * @return array Mapping of old file identifiers to new ones
 	 */
 	public function moveFolderWithinStorage(t3lib_file_Folder $folderToMove, t3lib_file_Folder $targetFolder,
 	                                        $newFolderName = NULL) {
-		// TODO: Implement moveFolderWithinStorage() method.
+		$newFolderIdentifier = $targetFolder->getIdentifier() . $newFolderName . '/';
+
+		try {
+			$result = $this->executeMoveRequest($folderToMove->getIdentifier(), $newFolderIdentifier);
+		} catch (Sabre_DAV_Exception $e) {
+			// TODO insert correct exception here
+			throw new t3lib_file_exception_AbstractFileOperationException('Moving folder ' . $folderToMove->getIdentifier()
+				. ' to ' . $newFolderIdentifier . ' failed: ' . $e->getMessage(), 1326135944);
+		}
+		// TODO check if there are some return codes that signalize an error, but do not throw an exception
+		// status codes: 204: file was overwritten; 201: file was created;
+
+		// TODO extract mapping of old to new identifiers from server response
 	}
 
 	/**
@@ -588,12 +600,26 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 *
 	 * @param t3lib_file_Folder $folderToMove
 	 * @param t3lib_file_Folder $targetFolder
-	 * @param string $newFileName
+	 * @param string $newFolderName
 	 * @return bool
 	 */
 	public function copyFolderWithinStorage(t3lib_file_Folder $folderToMove, t3lib_file_Folder $targetFolder,
-	                                        $newFileName = NULL) {
-		// TODO: Implement copyFolderWithinStorage() method.
+	                                        $newFolderName = NULL) {
+		$oldFolderUrl = $this->getResourceUrl($folderToMove);
+		$newFolderUrl = $this->getResourceUrl($targetFolder) . $newFolderName . '/';
+		$newFolderIdentifier = $targetFolder->getIdentifier() . $newFolderName . '/';
+
+		try {
+			$result = $this->davClient->request('COPY', $oldFolderUrl, NULL, array('Destination' => $newFolderUrl, 'Overwrite' => 'T'));
+		} catch (Sabre_DAV_Exception $e) {
+			// TODO insert correct exception here
+			throw new t3lib_file_exception_AbstractFileOperationException('Moving folder ' . $folderToMove->getIdentifier()
+				. ' to ' . $newFolderIdentifier . ' failed.', 1326135944);
+		}
+		// TODO check if there are some return codes that signalize an error, but do not throw an exception
+		// status codes: 204: file was overwritten; 201: file was created;
+
+		return $newFolderIdentifier;
 	}
 
 	/**
