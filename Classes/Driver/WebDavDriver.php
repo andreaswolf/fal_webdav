@@ -647,8 +647,8 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @param string $targetFileName
 	 * @return string The new identifier of the file
 	 */
-	public function addFileRaw($localFilePath, t3lib_file_Folder $targetFolder, $targetFileName = NULL) {
-		// TODO: Implement addFileRaw() method.
+	public function addFileRaw($localFilePath, t3lib_file_Folder $targetFolder, $targetFileName) {
+		return $this->addFile($localFilePath, $targetFolder, $targetFileName)->getIdentifier();
 	}
 
 	/**
@@ -661,7 +661,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @return bool TRUE if removing the file succeeded
 	 */
 	public function deleteFileRaw($identifier) {
-		// TODO: Implement deleteFileRaw() method.
+		return $this->deleteFile($this->getFile($identifier));
 	}
 
 	/**
@@ -710,6 +710,8 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 */
 	public function folderExists($identifier) {
 		// TODO add unit test
+		// TODO check if this test suffices to find out if the resource really is a folder - it might not do with some implementations
+		$identifier = '/' . trim($identifier, '/') . '/';
 		return $this->resourceExists($identifier);
 	}
 
