@@ -366,13 +366,14 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 *
 	 * @param string $path
 	 * @param string $pattern
+	 * @param integer $start The position to start the listing; if not set, start from the beginning
+	 * @param integer $numberOfItems The number of items to list; if not set, return all items
 	 * @return array
 	 */
 	// TODO add unit tests
 	// TODO implement pattern matching
-	// TODO implement limits
-	public function getFileList($path, $pattern = '') {
-		return $this->getDirectoryItemList($path, $pattern, 'getFileList_itemCallback');
+	public function getFileList($path, $pattern = '', $start = 0, $numberOfItems = 0) {
+		return $this->getDirectoryItemList($path, $pattern, $start, $numberOfItems, 'getFileList_itemCallback');
 	}
 
 	/**
@@ -380,11 +381,12 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 *
 	 * @param string $path
 	 * @param string $pattern
+	 * @param integer $start The position to start the listing; if not set, start from the beginning
+	 * @param integer $numberOfItems The number of items to list; if not set, return all items
 	 * @return array
 	 */
-	// TODO implement pattern matching
-	public function getFolderList($path, $pattern = '') {
-		return $this->getDirectoryItemList($path, $pattern, 'getFolderList_itemCallback');
+	public function getFolderList($path, $pattern = '', $start = 0, $numberOfItems = 0) {
+		return $this->getDirectoryItemList($path, $pattern, $start, $numberOfItems, 'getFolderList_itemCallback');
 	}
 
 	/**
@@ -392,14 +394,21 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 *
 	 * @param string $path
 	 * @param string $pattern
+	 * @param integer $start
+	 * @param integer $numberOfItems
 	 * @param callback $itemHandlerMethod
 	 * @return array
 	 */
 	// TODO implement pattern matching
-	protected function getDirectoryItemList($path, $pattern, $itemHandlerMethod) {
+	protected function getDirectoryItemList($path, $pattern, $start, $numberOfItems, $itemHandlerMethod) {
 		$url = $this->baseUrl . ltrim($path, '/');
 		$basePath = $this->basePath . ltrim($path, '/');
 		$properties = $this->davPropFind($url);
+
+			// the returned items are indexed by their key, so sort them here to return the correct items
+			// at least Apache does not sort them before returning
+		uksort($properties, 'strnatcasecmp');
+		$propertyIterator = new ArrayIterator($properties);
 
 		// TODO handle errors
 
@@ -407,11 +416,26 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 			$path = '/' . trim($path, '/') . '/';
 		}
 
+			// if we have only one entry, this is the folder we are currently in, so there are no items -> return an empty array
+		if (count($properties) == 1) {
+			return array();
+		}
+
+		$c = $numberOfItems > 0 ? $numberOfItems : $propertyIterator->count();
+		$propertyIterator->seek($start);
+
 		$items = array();
-		foreach ($properties as $filePath => $item) {
+		while ($propertyIterator->valid() && $c > 0) {
+			--$c;
+
+			$item = $propertyIterator->current();
+			$filePath = $propertyIterator->key();
+			$propertyIterator->next();
+
 			list($key, $entry) = $this->$itemHandlerMethod($item, $filePath, $basePath, $path);
 
 			if (empty($entry)) {
+				++$c;
 				continue;
 			}
 			$items[$key] = $entry;
