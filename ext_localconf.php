@@ -5,6 +5,6 @@ set_include_path($newPath . PATH_SEPARATOR . get_include_path());
 
 /** @var t3lib_file_Driver_DriverRegistry $registry */
 $registry = t3lib_div::makeInstance('t3lib_file_Driver_DriverRegistry');
-$registry->registerDriverClass('Tx_FalWebdav_Driver_WebDavDriver', 'WebDav', '', 'FILE:EXT:fal_webdav/Configuration/FlexForm/WebDavDriverFlexForm.xml');
+$registry->registerDriverClass('Tx_FalWebdav_Driver_WebDavDriver', 'WebDav', 'WebDAV', 'FILE:EXT:fal_webdav/Configuration/FlexForm/WebDavDriverFlexForm.xml');
 
 ?>
