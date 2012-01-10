@@ -34,6 +34,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @return void
 	 */
 	public function initialize() {
+		$this->capabilities = self::CAPABILITY_BROWSABLE + self::CAPABILITY_PUBLIC + self::CAPABILITY_WRITABLE;
 	}
 
 	public function injectDavClient(Sabre_DAV_Client $client) {
