@@ -288,7 +288,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @return array
 	 */
 	public function getFilePermissions(t3lib_file_File $file) {
-		// TODO: Implement getFilePermissions() method.
+		return array('r' => TRUE, 'w' => TRUE);
 	}
 
 	/**
@@ -298,7 +298,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @return array
 	 */
 	public function getFolderPermissions(t3lib_file_Folder $folder) {
-		// TODO: Implement getFolderPermissions() method.
+		return array('r' => TRUE, 'w' => TRUE);
 	}
 
 	/**
