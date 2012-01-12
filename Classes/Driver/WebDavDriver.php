@@ -373,11 +373,12 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @param string $pattern
 	 * @param integer $start The position to start the listing; if not set, start from the beginning
 	 * @param integer $numberOfItems The number of items to list; if not set, return all items
+	 * @param array $fileData Two-dimensional, identifier-indexed array of file index records from the database
 	 * @return array
 	 */
 	// TODO add unit tests
 	// TODO implement pattern matching
-	public function getFileList($path, $pattern = '', $start = 0, $numberOfItems = 0) {
+	public function getFileList($path, $pattern = '', $start = 0, $numberOfItems = 0, $fileData = array()) {
 		return $this->getDirectoryItemList($path, $pattern, $start, $numberOfItems, 'getFileList_itemCallback');
 	}
 
