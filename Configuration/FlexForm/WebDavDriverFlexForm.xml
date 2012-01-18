@@ -12,6 +12,7 @@
 					<config>
 						<type>input</type>
 						<default>http://user:pass@webdav.domain.com/path/</default>
+						<eval>trim</eval>
 						<size>30</size>
 					</config>
 				</TCEforms>

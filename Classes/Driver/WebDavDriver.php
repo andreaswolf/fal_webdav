@@ -25,6 +25,8 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	protected $davClient;
 
 	public function __construct(array $configuration = array()) {
+		// @†odo Iterate through all string properties and trim them...
+		$configuration['baseUrl'] = trim($configuration['baseUrl']);
 		parent::__construct($configuration);
 	}
 
