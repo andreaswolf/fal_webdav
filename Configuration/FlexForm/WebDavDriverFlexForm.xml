@@ -11,12 +11,40 @@
 					<label>WebDAV URL:</label>
 					<config>
 						<type>input</type>
-						<default>http://user:pass@webdav.domain.com/path/</default>
+						<default>http://webdav.domain.com/path/</default>
 						<eval>trim</eval>
 						<size>30</size>
 					</config>
 				</TCEforms>
 			</baseUrl>
+			<useAuthentication>
+				<TCEforms>
+					<label>Use authentication?</label>
+					<config>
+						<type>check</type>
+					</config>
+				</TCEforms>
+			</useAuthentication>
+			<username>
+				<TCEforms>
+					<label>Username:</label>
+					<config>
+						<type>input</type>
+						<default>username</default>
+						<size>30</size>
+					</config>
+				</TCEforms>
+			</username>
+			<password>
+				<TCEforms>
+					<label>Password:</label>
+					<config>
+						<type>input</type>
+						<eval>password</eval>
+						<size>30</size>
+					</config>
+				</TCEforms>
+			</password>
 		</el>
 	</ROOT>
 </T3DataStructure>

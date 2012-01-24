@@ -24,9 +24,29 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 */
 	protected $davClient;
 
+	/**
+	 * The username to use for connecting to the storage.
+	 *
+	 * @var string
+	 */
+	protected $username;
+
+	/**
+	 * The password to use for connecting to the storage.
+	 *
+	 * @var string
+	 */
+	protected $password;
+
 	public function __construct(array $configuration = array()) {
-		// @†odo Iterate through all string properties and trim them...
+		// TODO Iterate through all string properties and trim them...
 		$configuration['baseUrl'] = trim($configuration['baseUrl']);
+		$password = Tx_FalWebdav_Utility_Encryption::decryptPassword($configuration['password']);
+
+			// TODO check useAuthentication configuration option
+		$this->password = $password;
+		$this->username = $configuration['username'];
+
 		parent::__construct($configuration);
 	}
 
@@ -50,10 +70,13 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 		}
 		$this->basePath = rtrim($urlInfo['path'], '/') . '/';
 
+		$username = $urlInfo['user'] ? $urlInfo['user'] : $this->username;
+		$password = $urlInfo['pass'] ? $urlInfo['pass'] : $this->password;
+
 		$settings = array(
 			'baseUri' => $this->configuration['baseUrl'],
-			'userName' => $urlInfo['user'],
-			'password' => $urlInfo['pass']
+			'userName' => $username,
+			'password' => $password
 		);
 		unset($urlInfo['user']);
 		unset($urlInfo['pass']);
