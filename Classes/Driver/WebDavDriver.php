@@ -155,7 +155,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	/**
 	 * Returns the complete URL to a file. This is not necessarily the publicly available URL!
 	 *
-	 * @param string|t3lib_file_File|t3lib_file_Folder $file The file object or its identifier
+	 * @param string|t3lib_file_FileInterface|t3lib_file_Folder $file The file object or its identifier
 	 * @return string
 	 */
 	protected function getResourceUrl($file) {
@@ -169,10 +169,10 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	/**
 	 * Returns the public URL to a file.
 	 *
-	 * @param t3lib_file_File $file
+	 * @param t3lib_file_FileInterface $file
 	 * @return string
 	 */
-	public function getPublicUrl(t3lib_file_File $file) {
+	public function getPublicUrl(t3lib_file_FileInterface $file) {
 		if ($this->storage->isPublic()) {
 				// as the storage is marked as public, we can simply use the public URL here.
 			return $this->getResourceUrl($file);
@@ -182,12 +182,12 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	/**
 	 * Creates a (cryptographic) hash for a file.
 	 *
-	 * @param t3lib_file_File $file
+	 * @param t3lib_file_FileInterface $file
 	 * @param string $hashAlgorithm The hash algorithm to use
 	 * @return string
 	 * TODO switch parameter order?
 	 */
-	public function hash(t3lib_file_File $file, $hashAlgorithm) {
+	public function hash(t3lib_file_FileInterface $file, $hashAlgorithm) {
 		// TODO add unit test
 		$fileCopy = $this->copyFileToTemporaryPath($file);
 
@@ -205,7 +205,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 *
 	 * @param string $fileName
 	 * @param t3lib_file_Folder $parentFolder
-	 * @return t3lib_file_File
+	 * @return t3lib_file_FileInterface
 	 */
 	public function createFile($fileName, t3lib_file_Folder $parentFolder) {
 		$fileIdentifier = $parentFolder->getIdentifier() . $fileName;
@@ -221,10 +221,10 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * require fetching the file from an external location. So this might be an expensive operation (both in terms of
 	 * processing resources and money) for large files.
 	 *
-	 * @param t3lib_file_File $file
+	 * @param t3lib_file_FileInterface $file
 	 * @return string The file contents
 	 */
-	public function getFileContents(t3lib_file_File $file) {
+	public function getFileContents(t3lib_file_FileInterface $file) {
 		$fileUrl = $this->baseUrl . ltrim($file->getIdentifier(), '/');
 
 		$result = $this->davClient->request('GET', $fileUrl);
@@ -235,12 +235,12 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	/**
 	 * Sets the contents of a file to the specified value.
 	 *
-	 * @param t3lib_file_File $file
+	 * @param t3lib_file_FileInterface $file
 	 * @param string $contents
 	 * @return bool TRUE if setting the contents succeeded
 	 * @throws RuntimeException if the operation failed
 	 */
-	public function setFileContents(t3lib_file_File $file, $contents) {
+	public function setFileContents(t3lib_file_FileInterface $file, $contents) {
 		// Apache returns a "204 no content" status after a successful put operation
 
 		$fileUrl = $this->getResourceUrl($file);
@@ -257,10 +257,10 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @param string $localFilePath
 	 * @param t3lib_file_Folder $targetFolder
 	 * @param string $fileName The name to add the file under
-	 * @param t3lib_file_FileInterface $updateFileObject File object to update (instead of creating a new object). With this parameter, this function can be used to "populate" a dummy file object with a real file underneath.
-	 * @return t3lib_file_File
+	 * @param t3lib_file_FileInterfaceInterface $updateFileObject File object to update (instead of creating a new object). With this parameter, this function can be used to "populate" a dummy file object with a real file underneath.
+	 * @return t3lib_file_FileInterface
 	 */
-	public function addFile($localFilePath, t3lib_file_Folder $targetFolder, $fileName, t3lib_file_FileInterface $updateFileObject = NULL) {
+	public function addFile($localFilePath, t3lib_file_Folder $targetFolder, $fileName, t3lib_file_FileInterfaceInterface $updateFileObject = NULL) {
 		$fileIdentifier = $targetFolder->getIdentifier() . $fileName;
 		$fileUrl = $this->baseUrl . ltrim($fileIdentifier);
 
@@ -301,21 +301,21 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * Returns a (local copy of) a file for processing it. When changing the file, you have to take care of replacing the
 	 * current version yourself!
 	 *
-	 * @param t3lib_file_File $file
+	 * @param t3lib_file_FileInterface $file
 	 * @param bool $writable Set this to FALSE if you only need the file for read operations. This might speed up things, e.g. by using a cached local version. Never modify the file if you have set this flag!
 	 * @return string The path to the file on the local disk
 	 */
-	public function getFileForLocalProcessing(t3lib_file_File $file, $writable = TRUE) {
+	public function getFileForLocalProcessing(t3lib_file_FileInterface $file, $writable = TRUE) {
 		return $this->copyFileToTemporaryPath($file);
 	}
 
 	/**
 	 * Returns the permissions of a file as an array (keys r, w) of boolean flags
 	 *
-	 * @param t3lib_file_File $file
+	 * @param t3lib_file_FileInterface $file
 	 * @return array
 	 */
-	public function getFilePermissions(t3lib_file_File $file) {
+	public function getFilePermissions(t3lib_file_FileInterface $file) {
 		return array('r' => TRUE, 'w' => TRUE);
 	}
 
@@ -332,11 +332,11 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	/**
 	 * Renames a file
 	 *
-	 * @param t3lib_file_File $file
+	 * @param t3lib_file_FileInterface $file
 	 * @param string $newName
 	 * @return string The new identifier of the file
 	 */
-	public function renameFile(t3lib_file_File $file, $newName) {
+	public function renameFile(t3lib_file_FileInterface $file, $newName) {
 		// TODO add unit test
 		// Renaming works by invoking the MOVE method on the source URL and providing the new destination in the
 		// "Destination:" HTTP header.
@@ -351,11 +351,11 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	/**
 	 * Replaces the contents (and file-specific metadata) of a file object with a local file.
 	 *
-	 * @param t3lib_file_File $file
+	 * @param t3lib_file_FileInterface $file
 	 * @param string $localFilePath
 	 * @return bool
 	 */
-	public function replaceFile(t3lib_file_File $file, $localFilePath) {
+	public function replaceFile(t3lib_file_FileInterface $file, $localFilePath) {
 		$fileUrl = $this->getResourceUrl($file);
 		$fileHandle = fopen($localFilePath, 'r');
 		if (!is_resource($fileHandle)) {
@@ -531,10 +531,10 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	/**
 	 * Copies a file to a temporary path and returns that path. You have to take care of removing the temporary file yourself!
 	 *
-	 * @param t3lib_file_File $file
+	 * @param t3lib_file_FileInterface $file
 	 * @return string The temporary path
 	 */
-	public function copyFileToTemporaryPath(t3lib_file_File $file) {
+	public function copyFileToTemporaryPath(t3lib_file_FileInterface $file) {
 		$temporaryPath = t3lib_div::tempnam('vfs-tempfile-');
 		$fileUrl = $this->getResourceUrl($file);
 
@@ -549,12 +549,12 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * Note that this is only about an intra-storage move action, where a file is just
 	 * moved to another folder in the same storage.
 	 *
-	 * @param t3lib_file_File $file
+	 * @param t3lib_file_FileInterface $file
 	 * @param t3lib_file_Folder $targetFolder
 	 * @param string $fileName
 	 * @return string The new identifier of the file
 	 */
-	public function moveFileWithinStorage(t3lib_file_File $file, t3lib_file_Folder $targetFolder, $fileName) {
+	public function moveFileWithinStorage(t3lib_file_FileInterface $file, t3lib_file_Folder $targetFolder, $fileName) {
 		$newPath = $targetFolder->getIdentifier() . $fileName;
 
 		try {
@@ -575,12 +575,12 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * Note that this is only about an intra-storage copy action, where a file is just
 	 * copied to another folder in the same storage.
 	 *
-	 * @param t3lib_file_File $file
+	 * @param t3lib_file_FileInterface $file
 	 * @param t3lib_file_Folder $targetFolder
 	 * @param string $fileName
-	 * @return t3lib_file_File The new (copied) file object.
+	 * @return t3lib_file_FileInterface The new (copied) file object.
 	 */
-	public function copyFileWithinStorage(t3lib_file_File $file, t3lib_file_Folder $targetFolder, $fileName) {
+	public function copyFileWithinStorage(t3lib_file_FileInterface $file, t3lib_file_Folder $targetFolder, $fileName) {
 		$oldFileUrl = $this->getResourceUrl($file);
 		$newFileUrl = $this->getResourceUrl($targetFolder) . $fileName;
 		$newFileIdentifier = $targetFolder->getIdentifier() . $fileName;
@@ -656,10 +656,10 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * Removes a file from this storage. This does not check if the file is still used or if it is a bad idea to delete
 	 * it for some other reason - this has to be taken care of in the upper layers (e.g. the Storage)!
 	 *
-	 * @param t3lib_file_File $file
+	 * @param t3lib_file_FileInterface $file
 	 * @return boolean TRUE if the operation succeeded
 	 */
-	public function deleteFile(t3lib_file_File $file) {
+	public function deleteFile(t3lib_file_FileInterface $file) {
 		// TODO add unit tests
 		$fileUrl = $this->baseUrl . ltrim($file->getIdentifier(), '/');
 
