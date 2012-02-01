@@ -17,6 +17,5 @@ class Tx_FalWebdav_Backend_TceMainHook {
 			return;
 		}
 		$currentValue = Tx_FalWebdav_Utility_Encryption::encryptPassword($currentValue);
-		echo $currentValue;
 	}
 }

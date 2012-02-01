@@ -83,7 +83,7 @@ class Tx_FalWebdav_Utility_Encryption {
 		mcrypt_generic_init($td, $key, $iv);
 
 		$encryptedPassword = mcrypt_generic($td, $value);
-		mcrypt_generic_deinit($td, $key, $iv);
+		mcrypt_generic_deinit($td);
 
 		$encryptedText = sprintf('$%s$%s$%s$%s',
 			self::$encryptionMethod,
@@ -124,7 +124,7 @@ class Tx_FalWebdav_Utility_Encryption {
 
 		mcrypt_generic_init($td, $key, $iv);
 		$decryptedPassword = trim(mdecrypt_generic($td, base64_decode($encryptedPassword)));
-		mcrypt_generic_deinit($td, $key, $iv);
+		mcrypt_generic_deinit($td);
 
 			// close the module opened for decrypting
 		mcrypt_module_close($td);
