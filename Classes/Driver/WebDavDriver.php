@@ -257,10 +257,10 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @param string $localFilePath
 	 * @param t3lib_file_Folder $targetFolder
 	 * @param string $fileName The name to add the file under
-	 * @param t3lib_file_FileInterfaceInterface $updateFileObject File object to update (instead of creating a new object). With this parameter, this function can be used to "populate" a dummy file object with a real file underneath.
+	 * @param t3lib_file_FileInterface $updateFileObject File object to update (instead of creating a new object). With this parameter, this function can be used to "populate" a dummy file object with a real file underneath.
 	 * @return t3lib_file_FileInterface
 	 */
-	public function addFile($localFilePath, t3lib_file_Folder $targetFolder, $fileName, t3lib_file_FileInterfaceInterface $updateFileObject = NULL) {
+	public function addFile($localFilePath, t3lib_file_Folder $targetFolder, $fileName, t3lib_file_FileInterface $updateFileObject = NULL) {
 		$fileIdentifier = $targetFolder->getIdentifier() . $fileName;
 		$fileUrl = $this->baseUrl . ltrim($fileIdentifier);
 
@@ -399,12 +399,14 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @param string $pattern
 	 * @param integer $start The position to start the listing; if not set, start from the beginning
 	 * @param integer $numberOfItems The number of items to list; if not set, return all items
+	 * @param bool $excludeHiddenFiles Set this to TRUE if you want to exclude hidden files (starting with a dot) from the listing
 	 * @param array $fileData Two-dimensional, identifier-indexed array of file index records from the database
 	 * @return array
+	 * @todo Handle $excludeHiddenFiles
 	 */
 	// TODO add unit tests
 	// TODO implement pattern matching
-	public function getFileList($path, $pattern = '', $start = 0, $numberOfItems = 0, $fileData = array()) {
+	public function getFileList($path, $pattern = '', $start = 0, $numberOfItems = 0, $excludeHiddenFiles = TRUE, $fileData = array()) {
 		return $this->getDirectoryItemList($path, $pattern, $start, $numberOfItems, 'getFileList_itemCallback');
 	}
 
@@ -415,9 +417,11 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @param string $pattern
 	 * @param integer $start The position to start the listing; if not set, start from the beginning
 	 * @param integer $numberOfItems The number of items to list; if not set, return all items
+	 * @param bool $excludeHiddenFolders Set to TRUE to exclude hidden folders (starting with a dot)
 	 * @return array
+	 * @todo Handle $excludeHiddenFolders
 	 */
-	public function getFolderList($path, $pattern = '', $start = 0, $numberOfItems = 0) {
+	public function getFolderList($path, $pattern = '', $start = 0, $numberOfItems = 0, $excludeHiddenFolders = TRUE) {
 		return $this->getDirectoryItemList($path, $pattern, $start, $numberOfItems, 'getFolderList_itemCallback');
 	}
 
