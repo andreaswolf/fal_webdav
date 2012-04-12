@@ -172,7 +172,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @param t3lib_file_FileInterface $file
 	 * @return string
 	 */
-	public function getPublicUrl(t3lib_file_FileInterface $file) {
+	public function getPublicUrl(t3lib_file_ResourceInterface $file, $relativeToCurrentScript = false) {
 		if ($this->storage->isPublic()) {
 				// as the storage is marked as public, we can simply use the public URL here.
 			return $this->getResourceUrl($file);
