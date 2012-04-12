@@ -1,4 +1,29 @@
 <?php
+/***************************************************************
+ *  Copyright notice
+ *
+ *  (c) 2011 Andreas Wolf
+ *  All rights reserved
+ *
+ *  This script is part of the TYPO3 project. The TYPO3 project is
+ *  free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  The GNU General Public License can be found at
+ *  http://www.gnu.org/copyleft/gpl.html.
+ *  A copy is found in the textfile GPL.txt and important notices to the license
+ *  from the author is found in LICENSE.txt distributed with these scripts.
+ *
+ *
+ *  This script is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  This copyright notice MUST APPEAR in all copies of the script!
+ ***************************************************************/
 
 include_once 'Sabre/autoload.php';
 
@@ -169,13 +194,14 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	/**
 	 * Returns the public URL to a file.
 	 *
-	 * @param t3lib_file_FileInterface $file
+	 * @param t3lib_file_ResourceInterface $resource
+	 * @param bool  $relativeToCurrentScript    Determines whether the URL returned should be relative to the current script, in case it is relative at all (only for the LocalDriver)
 	 * @return string
 	 */
-	public function getPublicUrl(t3lib_file_ResourceInterface $file, $relativeToCurrentScript = false) {
+	public function getPublicUrl(t3lib_file_FileInterface $file) {
 		if ($this->storage->isPublic()) {
 				// as the storage is marked as public, we can simply use the public URL here.
-			return $this->getResourceUrl($file);
+			return $this->getResourceUrl($resource);
 		}
 	}
 
@@ -257,7 +283,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @param string $localFilePath
 	 * @param t3lib_file_Folder $targetFolder
 	 * @param string $fileName The name to add the file under
-	 * @param t3lib_file_FileInterface $updateFileObject File object to update (instead of creating a new object). With this parameter, this function can be used to "populate" a dummy file object with a real file underneath.
+	 * @param t3lib_file_AbstractFile $updateFileObject File object to update (instead of creating a new object). With this parameter, this function can be used to "populate" a dummy file object with a real file underneath.
 	 * @return t3lib_file_FileInterface
 	 */
 	public function addFile($localFilePath, t3lib_file_Folder $targetFolder, $fileName, t3lib_file_AbstractFile $updateFileObject = NULL) {
@@ -351,7 +377,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	/**
 	 * Replaces the contents (and file-specific metadata) of a file object with a local file.
 	 *
-	 * @param t3lib_file_FileInterface $file
+	 * @param t3lib_file_AbstractFile $file
 	 * @param string $localFilePath
 	 * @return bool
 	 */
