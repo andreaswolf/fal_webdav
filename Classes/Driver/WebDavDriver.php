@@ -201,7 +201,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @param bool  $relativeToCurrentScript    Determines whether the URL returned should be relative to the current script, in case it is relative at all (only for the LocalDriver)
 	 * @return string
 	 */
-	public function getPublicUrl(t3lib_file_FileInterface $file) {
+	public function getPublicUrl(t3lib_file_ResourceInterface $resource, $relativeToCurrentScript = FALSE) {
 		if ($this->storage->isPublic()) {
 				// as the storage is marked as public, we can simply use the public URL here.
 			return $this->getResourceUrl($resource);
@@ -454,6 +454,18 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 		return $this->getDirectoryItemList($path, $pattern, $start, $numberOfItems, 'getFolderList_itemCallback');
 	}
 
+	/**
+	 * Returns a folder within the given folder. Use this method instead of doing your own string manipulation magic
+	 * on the identifiers because non-hierarchical storages might fail otherwise.
+	 *
+	 * @param $name
+	 * @param t3lib_file_Folder $parentFolder
+	 * @return t3lib_file_Folder
+	 */
+	public function getFolderInFolder($name, t3lib_file_Folder $parentFolder) {
+		$folderIdentifier = $parentFolder->getIdentifier() . $name . '/';
+		return $this->getFolder($folderIdentifier);
+	}
 	/**
 	 * Generic handler method for directory listings - gluing together the listing items is done
 	 *
