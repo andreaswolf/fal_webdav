@@ -56,7 +56,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @return void
 	 */
 	public function initialize() {
-		$this->capabilities = self::CAPABILITY_BROWSABLE + self::CAPABILITY_PUBLIC + self::CAPABILITY_WRITABLE;
+		$this->capabilities = t3lib_file_Storage::CAPABILITY_BROWSABLE + t3lib_file_Storage::CAPABILITY_PUBLIC + t3lib_file_Storage::CAPABILITY_WRITABLE;
 	}
 
 	public function injectDavClient(Sabre_DAV_Client $client) {
@@ -137,7 +137,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @param string $resourcePath The path to the resource, i.e. a regular identifier as used everywhere else here.
 	 * @return bool
 	 */
-	protected function resourceExists($resourcePath) {
+	public function resourceExists($resourcePath) {
 		if ($resourcePath == '') {
 			throw new InvalidArgumentException('Resource path cannot be empty');
 		}
@@ -260,7 +260,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @param t3lib_file_FileInterface $updateFileObject File object to update (instead of creating a new object). With this parameter, this function can be used to "populate" a dummy file object with a real file underneath.
 	 * @return t3lib_file_FileInterface
 	 */
-	public function addFile($localFilePath, t3lib_file_Folder $targetFolder, $fileName, t3lib_file_FileInterface $updateFileObject = NULL) {
+	public function addFile($localFilePath, t3lib_file_Folder $targetFolder, $fileName, t3lib_file_AbstractFile $updateFileObject = NULL) {
 		$fileIdentifier = $targetFolder->getIdentifier() . $fileName;
 		$fileUrl = $this->baseUrl . ltrim($fileIdentifier);
 
@@ -355,7 +355,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @param string $localFilePath
 	 * @return bool
 	 */
-	public function replaceFile(t3lib_file_FileInterface $file, $localFilePath) {
+	public function replaceFile(t3lib_file_AbstractFile $file, $localFilePath) {
 		$fileUrl = $this->getResourceUrl($file);
 		$fileHandle = fopen($localFilePath, 'r');
 		if (!is_resource($fileHandle)) {
@@ -462,8 +462,6 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 
 		$items = array();
 		while ($propertyIterator->valid() && $c > 0) {
-			--$c;
-
 			$item = $propertyIterator->current();
 			$filePath = $propertyIterator->key();
 			$propertyIterator->next();
@@ -471,10 +469,11 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 			list($key, $entry) = $this->$itemHandlerMethod($item, $filePath, $basePath, $path);
 
 			if (empty($entry)) {
-				++$c;
 				continue;
 			}
 			$items[$key] = $entry;
+
+			--$c;
 		}
 
 		return $items;
@@ -613,7 +612,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @return array Mapping of old file identifiers to new ones
 	 */
 	public function moveFolderWithinStorage(t3lib_file_Folder $folderToMove, t3lib_file_Folder $targetFolder,
-	                                        $newFolderName = NULL) {
+	                                        $newFolderName) {
 		$newFolderIdentifier = $targetFolder->getIdentifier() . $newFolderName . '/';
 
 		try {
@@ -638,7 +637,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @return bool
 	 */
 	public function copyFolderWithinStorage(t3lib_file_Folder $folderToMove, t3lib_file_Folder $targetFolder,
-	                                        $newFolderName = NULL) {
+	                                        $newFolderName) {
 		$oldFolderUrl = $this->getResourceUrl($folderToMove);
 		$newFolderUrl = $this->getResourceUrl($targetFolder) . $newFolderName . '/';
 		$newFolderIdentifier = $targetFolder->getIdentifier() . $newFolderName . '/';

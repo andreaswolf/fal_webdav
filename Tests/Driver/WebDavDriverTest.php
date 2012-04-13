@@ -19,6 +19,8 @@
  * The TYPO3 project - inspiring people to share!                         *
  *                                                                        */
 
+require_once PATH_site . 'tests/t3lib/file/BaseTestCase.php';
+
 /**
  * Testcase for the WebDAV driver
  *
@@ -46,14 +48,17 @@ class Tx_FalWebdav_Driver_WebDavDriverTest extends t3lib_file_BaseTestCase {
 		return $this->getMock('Sabre_DAV_Client', array(), array(), '', FALSE);
 	}
 
-	protected function prepareFixture(Sabre_DAV_Client $client = NULL) {
+	protected function prepareFixture(Sabre_DAV_Client $client = NULL, $storage = NULL) {
 		if ($client === NULL) {
 			$client = $this->mockDavClient();
+		}
+		if ($storage === NULL) {
+			$storage = $this->getMock('t3lib_file_Storage', array(), array(), '', FALSE);
 		}
 
 		$this->fixture = new Tx_FalWebdav_Driver_WebDavDriver(array('baseUrl' => $this->baseUrl));
 		$this->fixture->injectDavClient($client);
-		$this->fixture->setStorage($this->getMock('t3lib_file_Storage', array(), array(), '', FALSE));
+		$this->fixture->setStorage($storage);
 		$this->fixture->initialize();
 	}
 
@@ -185,8 +190,9 @@ class Tx_FalWebdav_Driver_WebDavDriverTest extends t3lib_file_BaseTestCase {
 	 * @test
 	 */
 	public function getPublicUrlReturnsCorrectUrlIfStorageIsPublic() {
+		$mockedStorage = $this->getMock('t3lib_file_Storage', array(), array(), '', FALSE);
+		$mockedStorage->expects($this->any())->method('isPublic')->will($this->returnValue(TRUE));
 		$this->prepareFixture();
-		$this->fixture->getStorage()->expects($this->any())->method('isPublic')->will($this->returnValue(TRUE));
 
 		$mockedFile = $this->getSimpleFileMock('/someFolder/someFile.jpg');
 
