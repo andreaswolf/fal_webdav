@@ -101,11 +101,15 @@ class Tx_FalWebdav_Utility_Encryption {
 	/**
 	 * Decrypts a password. The necessary initialization vector is extracted from the password.
 	 *
-	 * @param $encryptedPassword
+	 * @param string $encryptedPassword
 	 * @return string
 	 * @see encryptPassword()
 	 */
 	public static function decryptPassword($encryptedPassword) {
+		if ($encryptedPassword == '') {
+			return '';
+		}
+
 		if (substr_count($encryptedPassword, '$') > 0) {
 			$passwordParts = t3lib_div::trimExplode('$', $encryptedPassword, TRUE);
 				// Base64 decoding the password is done below
