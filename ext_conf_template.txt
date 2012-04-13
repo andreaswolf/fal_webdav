@@ -1,0 +1,2 @@
+# cat=basic/enable/010; type=boolean; label= Index of Zero-Byte-Files: Some clients upload a file to a webdav storage and create a zero-byte-file during this process. If the indexer will crawl these files as empty, and write wrong hash sets. If you still want to enable empty files, enable this option.
+enableZeroByteFilesIndexing = 0

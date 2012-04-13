@@ -88,7 +88,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 		$this->davClient = $client;
 	}
 
-	protected function processConfiguration() {
+	public function processConfiguration() {
 		$urlInfo = parse_url($this->configuration['baseUrl']);
 		if ($urlInfo === FALSE) {
 			throw new InvalidArgumentException('Invalid base URL configured for WebDAV driver: ' . $this->configuration['baseUrl'], 1325771040);
@@ -97,6 +97,9 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 
 		$username = $urlInfo['user'] ? $urlInfo['user'] : $this->username;
 		$password = $urlInfo['pass'] ? $urlInfo['pass'] : $this->password;
+
+		$extConf = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['fal_webdav']);
+		$configuration['enableZeroByteFilesIndexing'] = (bool) $extConf['enableZeroByteFilesIndexing'];
 
 		$settings = array(
 			'baseUri' => $this->configuration['baseUrl'],
@@ -519,6 +522,11 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 			return array('', array());
 		}
 		$fileName = substr($filePath, strlen($basePath));
+
+			// check if the zero bytes should not be indexed
+		if ($this->configuration['enableZeroByteFilesIndexing'] === FALSE && $item['{DAV:}getcontentlength'] == 0) {
+			return array('', array());
+		}
 
 			// TODO add more items
 		return array($fileName, array(
