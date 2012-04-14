@@ -57,8 +57,9 @@ class Tx_FalWebdav_Driver_WebDavDriverTest extends t3lib_file_BaseTestCase {
 		}
 
 		$this->fixture = new Tx_FalWebdav_Driver_WebDavDriver(array('baseUrl' => $this->baseUrl));
-		$this->fixture->injectDavClient($client);
 		$this->fixture->setStorage($storage);
+		$this->fixture->processConfiguration();
+		$this->fixture->injectDavClient($client);
 		$this->fixture->initialize();
 	}
 
