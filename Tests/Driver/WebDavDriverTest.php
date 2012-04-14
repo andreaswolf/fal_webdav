@@ -212,4 +212,17 @@ class Tx_FalWebdav_Driver_WebDavDriverTest extends t3lib_file_BaseTestCase {
 
 		$this->fixture->deleteFolder($mockedFolder);
 	}
+
+	/**
+	 * @test
+	 */
+	public function timeoutOnRequestThrowsException() {
+		$this->setExpectedException('Sabre_DAV_Exception_Timeout');
+
+			// 192.0.2.0/24 is a network that should be used in documentation and for tests, but not in the wild;
+			// see http://tools.ietf.org/html/rfc5737
+		$client = new Sabre_DAV_Client(array('baseUri' => 'http://192.0.2.1/', 'timeout' => 5));
+
+		print_r($client->request('GET', '/something'));
+	}
 }
