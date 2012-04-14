@@ -138,7 +138,20 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 
 			// force overwriting the file (header Overwrite: T) because the Storage already handled possible conflicts
 			// for us
-		return $this->davClient->request('MOVE', $oldUrl, NULL, array('Destination' => $newUrl, 'Overwrite' => 'T'));
+		return $this->executeDavRequest('MOVE', $oldUrl, NULL, array('Destination' => $newUrl, 'Overwrite' => 'T'));
+	}
+
+	/**
+	 * Executes a request on the DAV driver.
+	 *
+	 * @param string $method
+	 * @param string $url
+	 * @param string $body
+	 * @param array $headers
+	 * @return array
+	 */
+	protected function executeDavRequest($method, $url, $body = NULL, array $headers = array()) {
+		return $this->davClient->request($method, $url, $body, $headers);
 	}
 
 
@@ -171,7 +184,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 		}
 		$url = $this->baseUrl . ltrim($resourcePath, '/');
 		try {
-			$this->davClient->request('HEAD', $url);
+			$this->executeDavRequest('HEAD', $url);
 		} catch (Sabre_DAV_Exception_NotFound $exception) {
 			return FALSE;
 		}
@@ -240,7 +253,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 		$fileIdentifier = $parentFolder->getIdentifier() . $fileName;
 		$fileUrl = $this->baseUrl . ltrim($fileIdentifier, '/');
 
-		$this->davClient->request('PUT', $fileUrl, '');
+		$this->executeDavRequest('PUT', $fileUrl, '');
 
 		return $this->getFile($fileIdentifier);
 	}
@@ -256,7 +269,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	public function getFileContents(t3lib_file_FileInterface $file) {
 		$fileUrl = $this->baseUrl . ltrim($file->getIdentifier(), '/');
 
-		$result = $this->davClient->request('GET', $fileUrl);
+		$result = $this->executeDavRequest('GET', $fileUrl);
 
 		return $result['body'];
 	}
@@ -273,7 +286,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 		// Apache returns a "204 no content" status after a successful put operation
 
 		$fileUrl = $this->getResourceUrl($file);
-		$result = $this->davClient->request('PUT', $fileUrl, $contents);
+		$result = $this->executeDavRequest('PUT', $fileUrl, $contents);
 
 		// TODO check result
 	}
@@ -297,7 +310,9 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 		if (!is_resource($fileHandle)) {
 			throw new RuntimeException('Could not open handle for ' . $localFilePath, 1325959310);
 		}
-		$result = $this->davClient->request('PUT', $fileUrl, $fileHandle);
+		$result = $this->executeDavRequest('PUT', $fileUrl, $fileHandle);
+
+		// TODO check result
 
 		return $this->getFile($fileIdentifier);
 	}
@@ -391,7 +406,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 			throw new RuntimeException('Could not open handle for ' . $localFilePath, 1325959311);
 		}
 
-		$this->davClient->request('PUT', $fileUrl, $fileHandle);
+		$this->executeDavRequest('PUT', $fileUrl, $fileHandle);
 	}
 
 	/**
@@ -403,7 +418,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	public function getFileInfoByIdentifier($identifier) {
 		$fileUrl = $this->baseUrl . ltrim($identifier, '/');
 
-		$properties = $this->davClient->request('PROPFIND', $fileUrl);
+		$properties = $this->executeDavRequest('PROPFIND', $fileUrl);
 		$properties = $this->davClient->parseMultiStatus($properties['body']);
 		$properties = $properties[$this->basePath . ltrim($identifier, '/')][200];
 
@@ -587,7 +602,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 		$temporaryPath = t3lib_div::tempnam('vfs-tempfile-');
 		$fileUrl = $this->getResourceUrl($file);
 
-		$result = $this->davClient->request('GET', $fileUrl);
+		$result = $this->executeDavRequest('GET', $fileUrl);
 		file_put_contents($temporaryPath, $result['body']);
 
 		return $temporaryPath;
@@ -637,7 +652,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 		try {
 				// force overwriting the file (header Overwrite: T) because the Storage already handled possible conflicts
 				// for us
-			$result = $this->davClient->request('COPY', $oldFileUrl, NULL, array('Destination' => $newFileUrl, 'Overwrite' => 'T'));
+			$result = $this->executeDavRequest('COPY', $oldFileUrl, NULL, array('Destination' => $newFileUrl, 'Overwrite' => 'T'));
 		} catch (Sabre_DAV_Exception $e) {
 			// TODO insert correct exception here
 			throw new t3lib_file_exception_AbstractFileOperationException('Copying file ' . $file->getIdentifier() . ' to '
@@ -689,7 +704,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 		$newFolderIdentifier = $targetFolder->getIdentifier() . $newFolderName . '/';
 
 		try {
-			$result = $this->davClient->request('COPY', $oldFolderUrl, NULL, array('Destination' => $newFolderUrl, 'Overwrite' => 'T'));
+			$result = $this->executeDavRequest('COPY', $oldFolderUrl, NULL, array('Destination' => $newFolderUrl, 'Overwrite' => 'T'));
 		} catch (Sabre_DAV_Exception $e) {
 			// TODO insert correct exception here
 			throw new t3lib_file_exception_AbstractFileOperationException('Moving folder ' . $folderToMove->getIdentifier()
@@ -712,7 +727,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 		// TODO add unit tests
 		$fileUrl = $this->baseUrl . ltrim($file->getIdentifier(), '/');
 
-		$result = $this->davClient->request('DELETE', $fileUrl);
+		$result = $this->executeDavRequest('DELETE', $fileUrl);
 
 		// 204 is derived from the answer Apache gives - there might be other status codes that indicate success
 		return ($result['statusCode'] == 204);
@@ -774,7 +789,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 		$folderPath = $parentFolder->getIdentifier() . $newFolderName . '/';
 		$folderUrl = $this->baseUrl . ltrim($folderPath, '/');
 
-		$this->davClient->request('MKCOL', $folderUrl);
+		$this->executeDavRequest('MKCOL', $folderUrl);
 
 		/** @var $factory t3lib_file_Factory */
 		$factory = t3lib_div::makeInstance('t3lib_file_Factory');
@@ -833,7 +848,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 		$folderUrl = $this->getResourceUrl($folder);
 
 			// We don't need to specify a depth header when deleting (see sect. 9.6.1 of RFC #4718)
-		$this->davClient->request('DELETE', $folderUrl, '', array());
+		$this->executeDavRequest('DELETE', $folderUrl, '', array());
 	}
 
 	/**
@@ -872,5 +887,4 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 
 		return (count($folderContents) == 1);
 	}
-
 }
