@@ -450,8 +450,8 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 */
 	// TODO add unit tests
 	// TODO implement pattern matching
-	public function getFileList($path, $pattern = '', $start = 0, $numberOfItems = 0, $excludeHiddenFiles = TRUE, $fileData = array()) {
-		return $this->getDirectoryItemList($path, $pattern, $start, $numberOfItems, 'getFileList_itemCallback');
+	public function getFileList($path, $start = 0, $numberOfItems = 0, array $filenameFilterCallbacks = array(), $fileData = array()) {
+		return $this->getDirectoryItemList($path, $start, $numberOfItems, $filenameFilterCallbacks, 'getFileList_itemCallback');
 	}
 
 	/**
@@ -463,10 +463,9 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @param integer $numberOfItems The number of items to list; if not set, return all items
 	 * @param bool $excludeHiddenFolders Set to TRUE to exclude hidden folders (starting with a dot)
 	 * @return array
-	 * @todo Handle $excludeHiddenFolders
 	 */
-	public function getFolderList($path, $pattern = '', $start = 0, $numberOfItems = 0, $excludeHiddenFolders = TRUE) {
-		return $this->getDirectoryItemList($path, $pattern, $start, $numberOfItems, 'getFolderList_itemCallback');
+	public function getFolderList($path, $start = 0, $numberOfItems = 0, array $foldernameFilterCallbacks = array()) {
+		return $this->getDirectoryItemList($path, $start, $numberOfItems, $foldernameFilterCallbacks, 'getFolderList_itemCallback');
 	}
 
 	/**
@@ -485,15 +484,16 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * Generic handler method for directory listings - gluing together the listing items is done
 	 *
 	 * @param string $path
-	 * @param string $pattern
 	 * @param integer $start
 	 * @param integer $numberOfItems
+	 * @param array $filterMethods
 	 * @param callback $itemHandlerMethod
 	 * @return array
 	 */
-	// TODO implement pattern matching
-	protected function getDirectoryItemList($path, $pattern, $start, $numberOfItems, $itemHandlerMethod) {
+	// TODO implement pre-loaded array rows
+	protected function getDirectoryItemList($path, $start, $numberOfItems, $filterMethods, $itemHandlerMethod) {
 		$url = $this->baseUrl . ltrim($path, '/');
+			// the full (web) path to the current folder on the web server
 		$basePath = $this->basePath . ltrim($path, '/');
 		$properties = $this->davPropFind($url);
 
@@ -519,8 +519,14 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 		$items = array();
 		while ($propertyIterator->valid() && $c > 0) {
 			$item = $propertyIterator->current();
+				// the full (web) path to the current item on the server
 			$filePath = $propertyIterator->key();
+			$itemName = substr($filePath, strlen($basePath));
 			$propertyIterator->next();
+
+			if ($this->applyFilterMethodsToDirectoryItem($filterMethods, $itemName, $filePath, $basePath, array('item' => $item)) === FALSE) {
+				continue;
+			}
 
 			list($key, $entry) = $this->$itemHandlerMethod($item, $filePath, $basePath, $path);
 
@@ -538,10 +544,10 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	/**
 	 * Callback method that extracts file information from a single entry inside a DAV PROPFIND response. Called by getDirectoryItemList.
 	 *
-	 * @param array $item
-	 * @param string $filePath
-	 * @param string $basePath
-	 * @param string $path
+	 * @param array $item The information about the item as fetched from the server
+	 * @param string $filePath The full path to the item
+	 * @param string $basePath The path of the queried folder
+	 * @param string $path The queried path (inside the WebDAV storage)
 	 * @return array
 	 */
 	protected function getFileList_itemCallback(array $item, $filePath, $basePath, $path) {
@@ -555,7 +561,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 			return array('', array());
 		}
 
-			// TODO add more items
+			// TODO add more information
 		return array($fileName, array(
 			'name' => $fileName,
 			'identifier' => $path . $fileName,
@@ -567,10 +573,10 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	/**
 	 * Callback method that extracts folder information from a single entry inside a DAV PROPFIND response. Called by getDirectoryItemList.
 	 *
-	 * @param array $item
-	 * @param string $filePath
-	 * @param string $basePath
-	 * @param string $path
+	 * @param array $item The information about the item as fetched from the server
+	 * @param string $filePath The full path to the item
+	 * @param string $basePath The path of the queried folder
+	 * @param string $path The queried path (inside the WebDAV storage)
 	 * @return array
 	 */
 	protected function getFolderList_itemCallback(array $item, $filePath, $basePath, $path) {
@@ -583,7 +589,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 			return array('', array());
 		}
 
-			// TODO add more items
+			// TODO add more information
 		return array($folderName, array(
 			'name' => $folderName,
 			'identifier' => $path . trim($folderName, '/') . '/',
