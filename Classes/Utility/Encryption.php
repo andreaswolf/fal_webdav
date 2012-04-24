@@ -77,6 +77,10 @@ class Tx_FalWebdav_Utility_Encryption {
 	 * @see decryptPassword()
 	 */
 	public static function encryptPassword($value) {
+		if ($value == '') {
+			return '';
+		}
+
 		$td = self::createEncryptionContext();
 		$iv = self::getInitializationVector();
 		$key = self::getEncryptionKey($td);

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * TCEforms integration for the WebDAV driver.
+ * TCEmain integration for the WebDAV driver.
  *
  * @author Andreas Wolf <andreas.wolf@ikt-werk.de>
  */
@@ -13,7 +13,8 @@ class Tx_FalWebdav_Backend_TceMainHook {
 		}
 
 		$currentValue = &$incomingFieldArray['configuration']['data']['sDEF']['lDEF']['password']['vDEF'];
-		if (substr($currentValue, 0, 1) == '$') {
+			// skip encryption if we have no password set or the password is already encrypted
+		if ($currentValue == '' || substr($currentValue, 0, 1) == '$') {
 			return;
 		}
 		$currentValue = Tx_FalWebdav_Utility_Encryption::encryptPassword($currentValue);
