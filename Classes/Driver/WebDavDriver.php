@@ -324,7 +324,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @return bool
 	 */
 	public function fileExists($identifier) {
-		return $this->resourceExists($identifier);
+		return substr($identifier, -1) !== '/' && $this->resourceExists($identifier);
 	}
 
 	/**
@@ -338,7 +338,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 		// TODO add unit test
 		$fileIdentifier = $folder->getIdentifier() . $fileName;
 
-		return $this->resourceExists($fileIdentifier);
+		return $this->fileExists($fileIdentifier);
 	}
 
 	/**
