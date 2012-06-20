@@ -6,12 +6,18 @@
  * @author Andreas Wolf <andreas.wolf@ikt-werk.de>
  */
 class Tx_FalWebdav_Backend_TceMainHook {
-
-	public function processDatamap_preProcessFieldArray(&$incomingFieldArray, $table, $id, $tceMainObject) {
-		if ($table != 'sys_file_storage') {
+	/**
+	 * @param array $incomingFieldArray
+	 * @param string $table
+	 * @param integer|string $id
+	 * @param t3lib_TCEmain $tceMainObject
+	 * @return mixed
+	 */
+	public function processDatamap_preProcessFieldArray(&$incomingFieldArray, $table, $id, t3lib_TCEmain $tceMainObject) {
+		if ($table !== 'sys_file_storage') {
 			return;
 		}
-		if ($incomingFieldArray['configuration']['data']['sDEF']['lDEF']['driver']['vDEF'] != 'WebDav') {
+		if ($incomingFieldArray['driver'] !== 'WebDav') {
 			return;
 		}
 
@@ -24,15 +30,16 @@ class Tx_FalWebdav_Backend_TceMainHook {
 			$url = $cleanedUrl;
 		}
 			// if we found authentication information in the URL, use it instead of the information currently stored
-		if ($extractedUsername != '') {
+		if ($extractedUsername !== '') {
 			$username = $extractedUsername;
 			$password = $extractedPassword;
 		}
 
 			// skip encryption if we have no password set or the password is already encrypted
-		if ($password == '' || substr($password, 0, 1) == '$') {
+		if ($password === '' || substr($password, 0, 1) === '$') {
 			return;
 		}
+
 		$password = Tx_FalWebdav_Utility_Encryption::encryptPassword($password);
 	}
 
