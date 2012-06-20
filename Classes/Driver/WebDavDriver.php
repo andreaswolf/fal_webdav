@@ -63,6 +63,11 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 */
 	protected $password;
 
+	/**
+	 * @var t3lib_cache_frontend_AbstractFrontend
+	 */
+	protected $directoryListingCache;
+
 	public function __construct(array $configuration = array()) {
 		// TODO Iterate through all string properties and trim them...
 		$configuration['baseUrl'] = trim($configuration['baseUrl']);
@@ -71,6 +76,8 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 			// TODO check useAuthentication configuration option
 		$this->password = $password;
 		$this->username = $configuration['username'];
+
+		$this->directoryListingCache = $GLOBALS['typo3CacheManager']->getCache('tx_falwebdav_directorylisting');
 
 		parent::__construct($configuration);
 	}
@@ -255,6 +262,8 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 
 		$this->executeDavRequest('PUT', $fileUrl, '');
 
+		$this->removeCacheForPath($parentFolder->getIdentifier());
+
 		return $this->getFile($fileIdentifier);
 	}
 
@@ -288,6 +297,8 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 		$fileUrl = $this->getResourceUrl($file);
 		$result = $this->executeDavRequest('PUT', $fileUrl, $contents);
 
+		$this->removeCacheForPath(dirname($file->getIdentifier()));
+
 		// TODO check result
 	}
 
@@ -313,6 +324,8 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 		$result = $this->executeDavRequest('PUT', $fileUrl, $fileHandle);
 
 		// TODO check result
+
+		$this->removeCacheForPath($targetFolder->getIdentifier());
 
 		return $this->getFile($fileIdentifier);
 	}
@@ -389,6 +402,8 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 
 		$this->executeMoveRequest($sourcePath, $targetPath);
 
+		$this->removeCacheForPath(dirname($file->getIdentifier()));
+
 		return $targetPath;
 	}
 
@@ -405,6 +420,8 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 		if (!is_resource($fileHandle)) {
 			throw new RuntimeException('Could not open handle for ' . $localFilePath, 1325959311);
 		}
+
+		$this->removeCacheForPath(dirname($file->getIdentifier()));
 
 		$this->executeDavRequest('PUT', $fileUrl, $fileHandle);
 	}
@@ -440,16 +457,13 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * Returns a list of files inside the specified path
 	 *
 	 * @param string $path
-	 * @param string $pattern
 	 * @param integer $start The position to start the listing; if not set, start from the beginning
 	 * @param integer $numberOfItems The number of items to list; if not set, return all items
-	 * @param bool $excludeHiddenFiles Set this to TRUE if you want to exclude hidden files (starting with a dot) from the listing
+	 * @param array $filenameFilterCallbacks Callback methods used for filtering the file list.
 	 * @param array $fileData Two-dimensional, identifier-indexed array of file index records from the database
 	 * @return array
-	 * @todo Handle $excludeHiddenFiles
 	 */
 	// TODO add unit tests
-	// TODO implement pattern matching
 	public function getFileList($path, $start = 0, $numberOfItems = 0, array $filenameFilterCallbacks = array(), $fileData = array()) {
 		return $this->getDirectoryItemList($path, $start, $numberOfItems, $filenameFilterCallbacks, 'getFileList_itemCallback');
 	}
@@ -458,10 +472,9 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * Returns a list of all folders in a given path
 	 *
 	 * @param string $path
-	 * @param string $pattern
 	 * @param integer $start The position to start the listing; if not set, start from the beginning
 	 * @param integer $numberOfItems The number of items to list; if not set, return all items
-	 * @param bool $excludeHiddenFolders Set to TRUE to exclude hidden folders (starting with a dot)
+	 * @param array $foldernameFilterCallbacks Callback methods used for filtering the file list.
 	 * @return array
 	 */
 	public function getFolderList($path, $start = 0, $numberOfItems = 0, array $foldernameFilterCallbacks = array()) {
@@ -492,14 +505,26 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 */
 	// TODO implement pre-loaded array rows
 	protected function getDirectoryItemList($path, $start, $numberOfItems, $filterMethods, $itemHandlerMethod) {
-		$url = $this->baseUrl . ltrim($path, '/');
+		$path = ltrim($path, '/');
+		$url = $this->baseUrl . $path;
 			// the full (web) path to the current folder on the web server
 		$basePath = $this->basePath . ltrim($path, '/');
-		$properties = $this->davPropFind($url);
 
-			// the returned items are indexed by their key, so sort them here to return the correct items
-			// at least Apache does not sort them before returning
-		uksort($properties, 'strnatcasecmp');
+			// Try to fetch the raw server response for the given path from our cache. We cache the raw response -
+			// although it might be a bit larger than the processed result - because we mainly do the caching to avoid
+			// the costly server calls - and we might save the most time and load when having the next pages already at
+			// hand for a file browser or the like.
+		$cacheKey = $this->getCacheIdentifierForPath($path);
+		if (!$properties = $this->directoryListingCache->get($cacheKey)) {
+			$properties = $this->davPropFind($url);
+
+			// the returned items are indexed by their key, so sort them here to return the correct items.
+			// At least Apache does not sort them before returning
+			uksort($properties, 'strnatcasecmp');
+
+			// TODO set cache lifetime
+			$this->directoryListingCache->set($cacheKey, $properties);
+		}
 		$propertyIterator = new ArrayIterator($properties);
 
 		// TODO handle errors
@@ -539,6 +564,26 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 		}
 
 		return $items;
+	}
+
+	/**
+	 * Returns the cache identifier for a given path.
+	 *
+	 * @param string $path
+	 * @return string
+	 */
+	protected function getCacheIdentifierForPath($path) {
+		return sha1($this->storage->getUid() . ':' . trim($path, '/') . '/');
+	}
+
+	/**
+	 * Flushes the cache for a given path inside this storage.
+	 *
+	 * @param $path
+	 * @return void
+	 */
+	protected function removeCacheForPath($path) {
+		$this->directoryListingCache->remove($this->getCacheIdentifierForPath($path));
 	}
 
 	/**
@@ -797,6 +842,8 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 
 		$this->executeDavRequest('MKCOL', $folderUrl);
 
+		$this->removeCacheForPath($parentFolder->getIdentifier());
+
 		/** @var $factory t3lib_file_Factory */
 		$factory = t3lib_div::makeInstance('t3lib_file_Factory');
 		return $factory->createFolderObject($this->storage, $folderPath, $newFolderName);
@@ -853,6 +900,8 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	public function deleteFolder(t3lib_file_Folder $folder, $deleteRecursively = FALSE) {
 		$folderUrl = $this->getResourceUrl($folder);
 
+		$this->removeCacheForPath(dirname($folder->getIdentifier()));
+
 			// We don't need to specify a depth header when deleting (see sect. 9.6.1 of RFC #4718)
 		$this->executeDavRequest('DELETE', $folderUrl, '', array());
 	}
@@ -876,6 +925,8 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 			throw new t3lib_file_exception_AbstractFileOperationException('Renaming ' . $sourcePath . ' to '
 				. $targetPath . ' failed.', 1325848030);
 		}
+
+		$this->removeCacheForPath(dirname($folder->getIdentifier()));
 
 		return $targetPath;
 	}
