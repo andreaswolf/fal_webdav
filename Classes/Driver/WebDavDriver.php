@@ -27,7 +27,7 @@
 
 include_once 'Sabre/autoload.php';
 
-class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver {
+class Tx_FalWebdav_Driver_WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\AbstractDriver {
 
 	/**
 	 * The base URL of the WebDAV share. Always ends with a trailing slash.
@@ -88,7 +88,9 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * @return void
 	 */
 	public function initialize() {
-		$this->capabilities = t3lib_file_Storage::CAPABILITY_BROWSABLE + t3lib_file_Storage::CAPABILITY_PUBLIC + t3lib_file_Storage::CAPABILITY_WRITABLE;
+		$this->capabilities = \TYPO3\CMS\Core\Resource\ResourceStorage::CAPABILITY_BROWSABLE
+			+ \TYPO3\CMS\Core\Resource\ResourceStorage::CAPABILITY_PUBLIC
+			+ \TYPO3\CMS\Core\Resource\ResourceStorage::CAPABILITY_WRITABLE;
 	}
 
 	public function injectDavClient(Sabre_DAV_Client $client) {
@@ -203,7 +205,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	/**
 	 * Returns the complete URL to a file. This is not necessarily the publicly available URL!
 	 *
-	 * @param string|t3lib_file_FileInterface|t3lib_file_Folder $file The file object or its identifier
+	 * @param string|\TYPO3\CMS\Core\Resource\FileInterface|\TYPO3\CMS\Core\Resource\Folder $file The file object or its identifier
 	 * @return string
 	 */
 	protected function getResourceUrl($file) {
@@ -217,11 +219,11 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	/**
 	 * Returns the public URL to a file.
 	 *
-	 * @param t3lib_file_ResourceInterface $resource
+	 * @param \TYPO3\CMS\Core\Resource\ResourceInterface $resource
 	 * @param bool  $relativeToCurrentScript    Determines whether the URL returned should be relative to the current script, in case it is relative at all (only for the LocalDriver)
 	 * @return string
 	 */
-	public function getPublicUrl(t3lib_file_ResourceInterface $resource, $relativeToCurrentScript = FALSE) {
+	public function getPublicUrl(\TYPO3\CMS\Core\Resource\ResourceInterface $resource, $relativeToCurrentScript = FALSE) {
 		if ($this->storage->isPublic()) {
 				// as the storage is marked as public, we can simply use the public URL here.
 			return $this->getResourceUrl($resource);
@@ -231,12 +233,12 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	/**
 	 * Creates a (cryptographic) hash for a file.
 	 *
-	 * @param t3lib_file_FileInterface $file
+	 * @param \TYPO3\CMS\Core\Resource\FileInterface $file
 	 * @param string $hashAlgorithm The hash algorithm to use
 	 * @return string
 	 * TODO switch parameter order?
 	 */
-	public function hash(t3lib_file_FileInterface $file, $hashAlgorithm) {
+	public function hash(\TYPO3\CMS\Core\Resource\FileInterface $file, $hashAlgorithm) {
 		// TODO add unit test
 		$fileCopy = $this->copyFileToTemporaryPath($file);
 
@@ -253,10 +255,10 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * Creates a new file and returns the matching file object for it.
 	 *
 	 * @param string $fileName
-	 * @param t3lib_file_Folder $parentFolder
-	 * @return t3lib_file_FileInterface
+	 * @param \TYPO3\CMS\Core\Resource\Folder $parentFolder
+	 * @return \TYPO3\CMS\Core\Resource\FileInterface
 	 */
-	public function createFile($fileName, t3lib_file_Folder $parentFolder) {
+	public function createFile($fileName, \TYPO3\CMS\Core\Resource\Folder $parentFolder) {
 		$fileIdentifier = $parentFolder->getIdentifier() . $fileName;
 		$fileUrl = $this->baseUrl . ltrim($fileIdentifier, '/');
 
@@ -272,10 +274,10 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * require fetching the file from an external location. So this might be an expensive operation (both in terms of
 	 * processing resources and money) for large files.
 	 *
-	 * @param t3lib_file_FileInterface $file
+	 * @param \TYPO3\CMS\Core\Resource\FileInterface $file
 	 * @return string The file contents
 	 */
-	public function getFileContents(t3lib_file_FileInterface $file) {
+	public function getFileContents(\TYPO3\CMS\Core\Resource\FileInterface $file) {
 		$fileUrl = $this->baseUrl . ltrim($file->getIdentifier(), '/');
 
 		$result = $this->executeDavRequest('GET', $fileUrl);
@@ -286,12 +288,12 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	/**
 	 * Sets the contents of a file to the specified value.
 	 *
-	 * @param t3lib_file_FileInterface $file
+	 * @param \TYPO3\CMS\Core\Resource\FileInterface $file
 	 * @param string $contents
 	 * @return bool TRUE if setting the contents succeeded
 	 * @throws RuntimeException if the operation failed
 	 */
-	public function setFileContents(t3lib_file_FileInterface $file, $contents) {
+	public function setFileContents(\TYPO3\CMS\Core\Resource\FileInterface $file, $contents) {
 		// Apache returns a "204 no content" status after a successful put operation
 
 		$fileUrl = $this->getResourceUrl($file);
@@ -308,12 +310,12 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * This assumes that the local file exists, so no further check is done here!
 	 *
 	 * @param string $localFilePath
-	 * @param t3lib_file_Folder $targetFolder
+	 * @param \TYPO3\CMS\Core\Resource\Folder $targetFolder
 	 * @param string $fileName The name to add the file under
-	 * @param t3lib_file_AbstractFile $updateFileObject File object to update (instead of creating a new object). With this parameter, this function can be used to "populate" a dummy file object with a real file underneath.
-	 * @return t3lib_file_FileInterface
+	 * @param \TYPO3\CMS\Core\Resource\AbstractFile $updateFileObject File object to update (instead of creating a new object). With this parameter, this function can be used to "populate" a dummy file object with a real file underneath.
+	 * @return \TYPO3\CMS\Core\Resource\FileInterface
 	 */
-	public function addFile($localFilePath, t3lib_file_Folder $targetFolder, $fileName, t3lib_file_AbstractFile $updateFileObject = NULL) {
+	public function addFile($localFilePath, \TYPO3\CMS\Core\Resource\Folder $targetFolder, $fileName, \TYPO3\CMS\Core\Resource\AbstractFile $updateFileObject = NULL) {
 		$fileIdentifier = $targetFolder->getIdentifier() . $fileName;
 		$fileUrl = $this->baseUrl . ltrim($fileIdentifier);
 
@@ -344,10 +346,10 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * Checks if a file inside a storage folder exists.
 	 *
 	 * @param string $fileName
-	 * @param t3lib_file_Folder $folder
+	 * @param \TYPO3\CMS\Core\Resource\Folder $folder
 	 * @return boolean
 	 */
-	public function fileExistsInFolder($fileName, t3lib_file_Folder $folder) {
+	public function fileExistsInFolder($fileName, \TYPO3\CMS\Core\Resource\Folder $folder) {
 		// TODO add unit test
 		$fileIdentifier = $folder->getIdentifier() . $fileName;
 
@@ -358,42 +360,42 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * Returns a (local copy of) a file for processing it. When changing the file, you have to take care of replacing the
 	 * current version yourself!
 	 *
-	 * @param t3lib_file_FileInterface $file
+	 * @param \TYPO3\CMS\Core\Resource\FileInterface $file
 	 * @param bool $writable Set this to FALSE if you only need the file for read operations. This might speed up things, e.g. by using a cached local version. Never modify the file if you have set this flag!
 	 * @return string The path to the file on the local disk
 	 */
-	public function getFileForLocalProcessing(t3lib_file_FileInterface $file, $writable = TRUE) {
+	public function getFileForLocalProcessing(\TYPO3\CMS\Core\Resource\FileInterface $file, $writable = TRUE) {
 		return $this->copyFileToTemporaryPath($file);
 	}
 
 	/**
 	 * Returns the permissions of a file as an array (keys r, w) of boolean flags
 	 *
-	 * @param t3lib_file_FileInterface $file
+	 * @param \TYPO3\CMS\Core\Resource\FileInterface $file
 	 * @return array
 	 */
-	public function getFilePermissions(t3lib_file_FileInterface $file) {
+	public function getFilePermissions(\TYPO3\CMS\Core\Resource\FileInterface $file) {
 		return array('r' => TRUE, 'w' => TRUE);
 	}
 
 	/**
 	 * Returns the permissions of a folder as an array (keys r, w) of boolean flags
 	 *
-	 * @param t3lib_file_Folder $folder
+	 * @param \TYPO3\CMS\Core\Resource\Folder $folder
 	 * @return array
 	 */
-	public function getFolderPermissions(t3lib_file_Folder $folder) {
+	public function getFolderPermissions(\TYPO3\CMS\Core\Resource\Folder $folder) {
 		return array('r' => TRUE, 'w' => TRUE);
 	}
 
 	/**
 	 * Renames a file
 	 *
-	 * @param t3lib_file_FileInterface $file
+	 * @param \TYPO3\CMS\Core\Resource\FileInterface $file
 	 * @param string $newName
 	 * @return string The new identifier of the file
 	 */
-	public function renameFile(t3lib_file_FileInterface $file, $newName) {
+	public function renameFile(\TYPO3\CMS\Core\Resource\FileInterface $file, $newName) {
 		// TODO add unit test
 		// Renaming works by invoking the MOVE method on the source URL and providing the new destination in the
 		// "Destination:" HTTP header.
@@ -410,11 +412,11 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	/**
 	 * Replaces the contents (and file-specific metadata) of a file object with a local file.
 	 *
-	 * @param t3lib_file_AbstractFile $file
+	 * @param \TYPO3\CMS\Core\Resource\AbstractFile $file
 	 * @param string $localFilePath
 	 * @return bool
 	 */
-	public function replaceFile(t3lib_file_AbstractFile $file, $localFilePath) {
+	public function replaceFile(\TYPO3\CMS\Core\Resource\AbstractFile $file, $localFilePath) {
 		$fileUrl = $this->getResourceUrl($file);
 		$fileHandle = fopen($localFilePath, 'r');
 		if (!is_resource($fileHandle)) {
@@ -486,10 +488,10 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * on the identifiers because non-hierarchical storages might fail otherwise.
 	 *
 	 * @param $name
-	 * @param t3lib_file_Folder $parentFolder
-	 * @return t3lib_file_Folder
+	 * @param \TYPO3\CMS\Core\Resource\Folder $parentFolder
+	 * @return \TYPO3\CMS\Core\Resource\Folder
 	 */
-	public function getFolderInFolder($name, t3lib_file_Folder $parentFolder) {
+	public function getFolderInFolder($name, \TYPO3\CMS\Core\Resource\Folder $parentFolder) {
 		$folderIdentifier = $parentFolder->getIdentifier() . $name . '/';
 		return $this->getFolder($folderIdentifier);
 	}
@@ -646,10 +648,10 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	/**
 	 * Copies a file to a temporary path and returns that path. You have to take care of removing the temporary file yourself!
 	 *
-	 * @param t3lib_file_FileInterface $file
+	 * @param \TYPO3\CMS\Core\Resource\FileInterface $file
 	 * @return string The temporary path
 	 */
-	public function copyFileToTemporaryPath(t3lib_file_FileInterface $file) {
+	public function copyFileToTemporaryPath(\TYPO3\CMS\Core\Resource\FileInterface $file) {
 		$temporaryPath = t3lib_div::tempnam('vfs-tempfile-');
 		$fileUrl = $this->getResourceUrl($file);
 
@@ -664,19 +666,19 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * Note that this is only about an intra-storage move action, where a file is just
 	 * moved to another folder in the same storage.
 	 *
-	 * @param t3lib_file_FileInterface $file
-	 * @param t3lib_file_Folder $targetFolder
+	 * @param \TYPO3\CMS\Core\Resource\FileInterface $file
+	 * @param \TYPO3\CMS\Core\Resource\Folder $targetFolder
 	 * @param string $fileName
 	 * @return string The new identifier of the file
 	 */
-	public function moveFileWithinStorage(t3lib_file_FileInterface $file, t3lib_file_Folder $targetFolder, $fileName) {
+	public function moveFileWithinStorage(\TYPO3\CMS\Core\Resource\FileInterface $file, \TYPO3\CMS\Core\Resource\Folder $targetFolder, $fileName) {
 		$newPath = $targetFolder->getIdentifier() . $fileName;
 
 		try {
 			$result = $this->executeMoveRequest($file->getIdentifier(), $newPath);
 		} catch (Sabre_DAV_Exception $e) {
 			// TODO insert correct exception here
-			throw new t3lib_file_exception_AbstractFileOperationException('Moving file ' . $file->getIdentifier()
+			throw new \TYPO3\CMS\Core\Resource\Exception\FileOperationErrorException('Moving file ' . $file->getIdentifier()
 				. ' to ' . $newPath . ' failed.', 1325848030);
 		}
 		// TODO check if there are some return codes that signalize an error, but do not throw an exception
@@ -690,12 +692,12 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * Note that this is only about an intra-storage copy action, where a file is just
 	 * copied to another folder in the same storage.
 	 *
-	 * @param t3lib_file_FileInterface $file
-	 * @param t3lib_file_Folder $targetFolder
+	 * @param \TYPO3\CMS\Core\Resource\FileInterface $file
+	 * @param \TYPO3\CMS\Core\Resource\Folder $targetFolder
 	 * @param string $fileName
-	 * @return t3lib_file_FileInterface The new (copied) file object.
+	 * @return \TYPO3\CMS\Core\Resource\FileInterface The new (copied) file object.
 	 */
-	public function copyFileWithinStorage(t3lib_file_FileInterface $file, t3lib_file_Folder $targetFolder, $fileName) {
+	public function copyFileWithinStorage(\TYPO3\CMS\Core\Resource\FileInterface $file, \TYPO3\CMS\Core\Resource\Folder $targetFolder, $fileName) {
 		$oldFileUrl = $this->getResourceUrl($file);
 		$newFileUrl = $this->getResourceUrl($targetFolder) . $fileName;
 		$newFileIdentifier = $targetFolder->getIdentifier() . $fileName;
@@ -706,7 +708,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 			$result = $this->executeDavRequest('COPY', $oldFileUrl, NULL, array('Destination' => $newFileUrl, 'Overwrite' => 'T'));
 		} catch (Sabre_DAV_Exception $e) {
 			// TODO insert correct exception here
-			throw new t3lib_file_exception_AbstractFileOperationException('Copying file ' . $file->getIdentifier() . ' to '
+			throw new \TYPO3\CMS\Core\Resource\Exception\FileOperationErrorException('Copying file ' . $file->getIdentifier() . ' to '
 				. $newFileIdentifier . ' failed.', 1325848030);
 		}
 		// TODO check if there are some return codes that signalize an error, but do not throw an exception
@@ -718,12 +720,12 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	/**
 	 * Folder equivalent to moveFileWithinStorage().
 	 *
-	 * @param t3lib_file_Folder $folderToMove
-	 * @param t3lib_file_Folder $targetFolder
+	 * @param \TYPO3\CMS\Core\Resource\Folder $folderToMove
+	 * @param \TYPO3\CMS\Core\Resource\Folder $targetFolder
 	 * @param string $newFolderName
 	 * @return array Mapping of old file identifiers to new ones
 	 */
-	public function moveFolderWithinStorage(t3lib_file_Folder $folderToMove, t3lib_file_Folder $targetFolder,
+	public function moveFolderWithinStorage(\TYPO3\CMS\Core\Resource\Folder $folderToMove, \TYPO3\CMS\Core\Resource\Folder $targetFolder,
 	                                        $newFolderName) {
 		$newFolderIdentifier = $targetFolder->getIdentifier() . $newFolderName . '/';
 
@@ -731,7 +733,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 			$result = $this->executeMoveRequest($folderToMove->getIdentifier(), $newFolderIdentifier);
 		} catch (Sabre_DAV_Exception $e) {
 			// TODO insert correct exception here
-			throw new t3lib_file_exception_AbstractFileOperationException('Moving folder ' . $folderToMove->getIdentifier()
+			throw new \TYPO3\CMS\Core\Resource\Exception\FileOperationErrorException('Moving folder ' . $folderToMove->getIdentifier()
 				. ' to ' . $newFolderIdentifier . ' failed: ' . $e->getMessage(), 1326135944);
 		}
 		// TODO check if there are some return codes that signalize an error, but do not throw an exception
@@ -743,12 +745,12 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	/**
 	 * Folder equivalent to copyFileWithinStorage().
 	 *
-	 * @param t3lib_file_Folder $folderToMove
-	 * @param t3lib_file_Folder $targetFolder
+	 * @param \TYPO3\CMS\Core\Resource\Folder $folderToMove
+	 * @param \TYPO3\CMS\Core\Resource\Folder $targetFolder
 	 * @param string $newFolderName
 	 * @return bool
 	 */
-	public function copyFolderWithinStorage(t3lib_file_Folder $folderToMove, t3lib_file_Folder $targetFolder,
+	public function copyFolderWithinStorage(\TYPO3\CMS\Core\Resource\Folder $folderToMove, \TYPO3\CMS\Core\Resource\Folder $targetFolder,
 	                                        $newFolderName) {
 		$oldFolderUrl = $this->getResourceUrl($folderToMove);
 		$newFolderUrl = $this->getResourceUrl($targetFolder) . $newFolderName . '/';
@@ -758,7 +760,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 			$result = $this->executeDavRequest('COPY', $oldFolderUrl, NULL, array('Destination' => $newFolderUrl, 'Overwrite' => 'T'));
 		} catch (Sabre_DAV_Exception $e) {
 			// TODO insert correct exception here
-			throw new t3lib_file_exception_AbstractFileOperationException('Moving folder ' . $folderToMove->getIdentifier()
+			throw new \TYPO3\CMS\Core\Resource\Exception\FileOperationErrorException('Moving folder ' . $folderToMove->getIdentifier()
 				. ' to ' . $newFolderIdentifier . ' failed.', 1326135944);
 		}
 		// TODO check if there are some return codes that signalize an error, but do not throw an exception
@@ -771,10 +773,10 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * Removes a file from this storage. This does not check if the file is still used or if it is a bad idea to delete
 	 * it for some other reason - this has to be taken care of in the upper layers (e.g. the Storage)!
 	 *
-	 * @param t3lib_file_FileInterface $file
+	 * @param \TYPO3\CMS\Core\Resource\FileInterface $file
 	 * @return boolean TRUE if the operation succeeded
 	 */
-	public function deleteFile(t3lib_file_FileInterface $file) {
+	public function deleteFile(\TYPO3\CMS\Core\Resource\FileInterface $file) {
 		// TODO add unit tests
 		$fileUrl = $this->baseUrl . ltrim($file->getIdentifier(), '/');
 
@@ -788,11 +790,11 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * Adds a file at the specified location. This should only be used internally.
 	 *
 	 * @param string $localFilePath
-	 * @param t3lib_file_Folder $targetFolder
+	 * @param \TYPO3\CMS\Core\Resource\Folder $targetFolder
 	 * @param string $targetFileName
 	 * @return string The new identifier of the file
 	 */
-	public function addFileRaw($localFilePath, t3lib_file_Folder $targetFolder, $targetFileName) {
+	public function addFileRaw($localFilePath, \TYPO3\CMS\Core\Resource\Folder $targetFolder, $targetFileName) {
 		return $this->addFile($localFilePath, $targetFolder, $targetFileName)->getIdentifier();
 	}
 
@@ -812,7 +814,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	/**
 	 * Returns the root level folder of the storage.
 	 *
-	 * @return t3lib_file_Folder
+	 * @return \TYPO3\CMS\Core\Resource\Folder
 	 */
 	public function getRootLevelFolder() {
 		return $this->getFolder('/');
@@ -821,7 +823,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	/**
 	 * Returns the default folder new files should be put into.
 	 *
-	 * @return t3lib_file_Folder
+	 * @return \TYPO3\CMS\Core\Resource\Folder
 	 */
 	public function getDefaultFolder() {
 		return $this->getFolder('/');
@@ -831,10 +833,10 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * Creates a folder.
 	 *
 	 * @param string $newFolderName
-	 * @param t3lib_file_Folder $parentFolder
-	 * @return t3lib_file_Folder The new (created) folder object
+	 * @param \TYPO3\CMS\Core\Resource\Folder $parentFolder
+	 * @return \TYPO3\CMS\Core\Resource\Folder The new (created) folder object
 	 */
-	public function createFolder($newFolderName, t3lib_file_Folder $parentFolder) {
+	public function createFolder($newFolderName, \TYPO3\CMS\Core\Resource\Folder $parentFolder) {
 			// We add a slash to the path as some actions require a trailing slash on some servers.
 			// Apache's mod_dav e.g. does not do it for this action, but it does not do harm either, so we add it anyways
 		$folderPath = $parentFolder->getIdentifier() . $newFolderName . '/';
@@ -844,8 +846,8 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 
 		$this->removeCacheForPath($parentFolder->getIdentifier());
 
-		/** @var $factory t3lib_file_Factory */
-		$factory = t3lib_div::makeInstance('t3lib_file_Factory');
+		/** @var $factory \TYPO3\CMS\Core\Resource\ResourceFactory */
+		$factory = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('\TYPO3\CMS\Core\Resource\ResourceFactory');
 		return $factory->createFolderObject($this->storage, $folderPath, $newFolderName);
 	}
 
@@ -866,10 +868,10 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * Checks if a file inside a storage folder exists.
 	 *
 	 * @param string $folderName
-	 * @param t3lib_file_Folder $folder
+	 * @param \TYPO3\CMS\Core\Resource\Folder $folder
 	 * @return bool
 	 */
-	public function folderExistsInFolder($folderName, t3lib_file_Folder $folder) {
+	public function folderExistsInFolder($folderName, \TYPO3\CMS\Core\Resource\Folder $folder) {
 		$folderIdentifier = $folder->getIdentifier() . $folderName . '/';
 		return $this->resourceExists($folderIdentifier);
 	}
@@ -878,11 +880,11 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	 * Checks if a given identifier is within a container, e.g. if a file or folder is within another folder.
 	 * This can be used to check for webmounts.
 	 *
-	 * @param t3lib_file_Folder $container
+	 * @param \TYPO3\CMS\Core\Resource\Folder $container
 	 * @param string $content
 	 * @return bool
 	 */
-	public function isWithin(t3lib_file_Folder $container, $content) {
+	public function isWithin(\TYPO3\CMS\Core\Resource\Folder $container, $content) {
 		// TODO extend this to also support objects as $content
 		$folderPath = $container->getIdentifier();
 		$content = '/' . ltrim($content, '/');
@@ -893,11 +895,11 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	/**
 	 * Removes a folder from this storage.
 	 *
-	 * @param t3lib_file_Folder $folder
+	 * @param \TYPO3\CMS\Core\Resource\Folder $folder
 	 * @param bool $deleteRecursively
 	 * @return boolean
 	 */
-	public function deleteFolder(t3lib_file_Folder $folder, $deleteRecursively = FALSE) {
+	public function deleteFolder(\TYPO3\CMS\Core\Resource\Folder $folder, $deleteRecursively = FALSE) {
 		$folderUrl = $this->getResourceUrl($folder);
 
 		$this->removeCacheForPath(dirname($folder->getIdentifier()));
@@ -909,12 +911,12 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	/**
 	 * Renames a folder in this storage.
 	 *
-	 * @param t3lib_file_Folder $folder
+	 * @param \TYPO3\CMS\Core\Resource\Folder $folder
 	 * @param string $newName The new folder name
 	 * @return string The new identifier of the folder if the operation succeeds
 	 * @throws RuntimeException if renaming the folder failed
 	 */
-	public function renameFolder(t3lib_file_Folder $folder, $newName) {
+	public function renameFolder(\TYPO3\CMS\Core\Resource\Folder $folder, $newName) {
 		$sourcePath = $folder->getIdentifier();
 		$targetPath = dirname($folder->getIdentifier()) . '/' . $newName . '/';
 
@@ -922,7 +924,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 			$result = $this->executeMoveRequest($sourcePath, $targetPath);
 		} catch (Sabre_DAV_Exception $e) {
 			// TODO insert correct exception here
-			throw new t3lib_file_exception_AbstractFileOperationException('Renaming ' . $sourcePath . ' to '
+			throw new \TYPO3\CMS\Core\Resource\Exception\FileOperationErrorException('Renaming ' . $sourcePath . ' to '
 				. $targetPath . ' failed.', 1325848030);
 		}
 
@@ -934,10 +936,10 @@ class Tx_FalWebdav_Driver_WebDavDriver extends t3lib_file_Driver_AbstractDriver 
 	/**
 	 * Checks if a folder contains files and (if supported) other folders.
 	 *
-	 * @param t3lib_file_Folder $folder
+	 * @param \TYPO3\CMS\Core\Resource\Folder $folder
 	 * @return bool TRUE if there are no files and folders within $folder
 	 */
-	public function isFolderEmpty(t3lib_file_Folder $folder) {
+	public function isFolderEmpty(\TYPO3\CMS\Core\Resource\Folder $folder) {
 		$folderUrl = $this->getResourceUrl($folder);
 
 		$folderContents = $this->davPropFind($folderUrl);
