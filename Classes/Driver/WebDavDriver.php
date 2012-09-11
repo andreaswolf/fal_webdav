@@ -64,7 +64,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\A
 	protected $password;
 
 	/**
-	 * @var t3lib_cache_frontend_AbstractFrontend
+	 * @var \TYPO3\CMS\Core\Cache\Frontend\AbstractFrontend
 	 */
 	protected $directoryListingCache;
 
@@ -117,7 +117,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\A
 		);
 		unset($urlInfo['user']);
 		unset($urlInfo['pass']);
-		$this->baseUrl = t3lib_utility_Http::buildUrl($urlInfo);
+		$this->baseUrl = \TYPO3\CMS\Core\Utility\HttpUtility::buildUrl($urlInfo);
 
 		$this->davClient = new Sabre_DAV_Client($settings);
 	}
@@ -186,6 +186,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\A
 	 *
 	 * @param string $resourcePath The path to the resource, i.e. a regular identifier as used everywhere else here.
 	 * @return bool
+	 * @throws \InvalidArgumentException
 	 */
 	public function resourceExists($resourcePath) {
 		if ($resourcePath == '') {
@@ -314,6 +315,8 @@ class Tx_FalWebdav_Driver_WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\A
 	 * @param string $fileName The name to add the file under
 	 * @param \TYPO3\CMS\Core\Resource\AbstractFile $updateFileObject File object to update (instead of creating a new object). With this parameter, this function can be used to "populate" a dummy file object with a real file underneath.
 	 * @return \TYPO3\CMS\Core\Resource\FileInterface
+	 * @throws \TYPO3\CMS\Core\Resource\Exception\FileDoesNotExistException
+	 * @throws \RuntimeException
 	 */
 	public function addFile($localFilePath, \TYPO3\CMS\Core\Resource\Folder $targetFolder, $fileName, \TYPO3\CMS\Core\Resource\AbstractFile $updateFileObject = NULL) {
 		$fileIdentifier = $targetFolder->getIdentifier() . $fileName;
@@ -415,6 +418,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\A
 	 * @param \TYPO3\CMS\Core\Resource\AbstractFile $file
 	 * @param string $localFilePath
 	 * @return bool
+	 * @throws \RuntimeException
 	 */
 	public function replaceFile(\TYPO3\CMS\Core\Resource\AbstractFile $file, $localFilePath) {
 		$fileUrl = $this->getResourceUrl($file);
@@ -502,7 +506,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\A
 	 * @param integer $start
 	 * @param integer $numberOfItems
 	 * @param array $filterMethods
-	 * @param callback $itemHandlerMethod
+	 * @param callable $itemHandlerMethod
 	 * @return array
 	 */
 	// TODO implement pre-loaded array rows
@@ -652,7 +656,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\A
 	 * @return string The temporary path
 	 */
 	public function copyFileToTemporaryPath(\TYPO3\CMS\Core\Resource\FileInterface $file) {
-		$temporaryPath = t3lib_div::tempnam('vfs-tempfile-');
+		$temporaryPath = \TYPO3\CMS\Core\Utility\GeneralUtility::tempnam('vfs-tempfile-');
 		$fileUrl = $this->getResourceUrl($file);
 
 		$result = $this->executeDavRequest('GET', $fileUrl);
@@ -670,6 +674,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\A
 	 * @param \TYPO3\CMS\Core\Resource\Folder $targetFolder
 	 * @param string $fileName
 	 * @return string The new identifier of the file
+	 * @throws \TYPO3\CMS\Core\Resource\Exception\FileOperationErrorException
 	 */
 	public function moveFileWithinStorage(\TYPO3\CMS\Core\Resource\FileInterface $file, \TYPO3\CMS\Core\Resource\Folder $targetFolder, $fileName) {
 		$newPath = $targetFolder->getIdentifier() . $fileName;
@@ -696,6 +701,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\A
 	 * @param \TYPO3\CMS\Core\Resource\Folder $targetFolder
 	 * @param string $fileName
 	 * @return \TYPO3\CMS\Core\Resource\FileInterface The new (copied) file object.
+	 * @throws \TYPO3\CMS\Core\Resource\Exception\FileOperationErrorException
 	 */
 	public function copyFileWithinStorage(\TYPO3\CMS\Core\Resource\FileInterface $file, \TYPO3\CMS\Core\Resource\Folder $targetFolder, $fileName) {
 		$oldFileUrl = $this->getResourceUrl($file);
@@ -724,6 +730,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\A
 	 * @param \TYPO3\CMS\Core\Resource\Folder $targetFolder
 	 * @param string $newFolderName
 	 * @return array Mapping of old file identifiers to new ones
+	 * @throws \TYPO3\CMS\Core\Resource\Exception\FileOperationErrorException
 	 */
 	public function moveFolderWithinStorage(\TYPO3\CMS\Core\Resource\Folder $folderToMove, \TYPO3\CMS\Core\Resource\Folder $targetFolder,
 	                                        $newFolderName) {
@@ -749,6 +756,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\A
 	 * @param \TYPO3\CMS\Core\Resource\Folder $targetFolder
 	 * @param string $newFolderName
 	 * @return bool
+	 * @throws \TYPO3\CMS\Core\Resource\Exception\FileOperationErrorException
 	 */
 	public function copyFolderWithinStorage(\TYPO3\CMS\Core\Resource\Folder $folderToMove, \TYPO3\CMS\Core\Resource\Folder $targetFolder,
 	                                        $newFolderName) {
@@ -847,7 +855,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\A
 		$this->removeCacheForPath($parentFolder->getIdentifier());
 
 		/** @var $factory \TYPO3\CMS\Core\Resource\ResourceFactory */
-		$factory = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('\TYPO3\CMS\Core\Resource\ResourceFactory');
+		$factory = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\CMS\Core\Resource\ResourceFactory');
 		return $factory->createFolderObject($this->storage, $folderPath, $newFolderName);
 	}
 
@@ -889,7 +897,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\A
 		$folderPath = $container->getIdentifier();
 		$content = '/' . ltrim($content, '/');
 
-		return t3lib_div::isFirstPartOfStr($content, $folderPath);
+		return \TYPO3\CMS\Core\Utility\GeneralUtility::isFirstPartOfStr($content, $folderPath);
 	}
 
 	/**
@@ -915,6 +923,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\A
 	 * @param string $newName The new folder name
 	 * @return string The new identifier of the folder if the operation succeeds
 	 * @throws RuntimeException if renaming the folder failed
+	 * @throws \TYPO3\CMS\Core\Resource\Exception\FileOperationErrorException
 	 */
 	public function renameFolder(\TYPO3\CMS\Core\Resource\Folder $folder, $newName) {
 		$sourcePath = $folder->getIdentifier();
