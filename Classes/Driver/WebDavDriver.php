@@ -1,4 +1,6 @@
 <?php
+namespace TYPO3\FalWebdav\Driver;
+
 /***************************************************************
  *  Copyright notice
  *
@@ -27,7 +29,7 @@
 
 include_once 'Sabre/autoload.php';
 
-class Tx_FalWebdav_Driver_WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\AbstractDriver {
+class WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\AbstractDriver {
 
 	/**
 	 * The base URL of the WebDAV share. Always ends with a trailing slash.
@@ -45,7 +47,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\A
 	protected $basePath;
 
 	/**
-	 * @var Sabre_DAV_Client
+	 * @var \Sabre_DAV_Client
 	 */
 	protected $davClient;
 
@@ -71,7 +73,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\A
 	public function __construct(array $configuration = array()) {
 		// TODO Iterate through all string properties and trim them...
 		$configuration['baseUrl'] = trim($configuration['baseUrl']);
-		$password = Tx_FalWebdav_Utility_Encryption::decryptPassword($configuration['password']);
+		$password = \TYPO3\FalWebdav\Utility\Encryption::decryptPassword($configuration['password']);
 
 			// TODO check useAuthentication configuration option
 		$this->password = $password;
@@ -93,14 +95,25 @@ class Tx_FalWebdav_Driver_WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\A
 			+ \TYPO3\CMS\Core\Resource\ResourceStorage::CAPABILITY_WRITABLE;
 	}
 
-	public function injectDavClient(Sabre_DAV_Client $client) {
+	/**
+	 * Inject method for the DAV client. Mostly useful for unit tests.
+	 *
+	 * @param \Sabre_DAV_Client $client
+	 */
+	public function injectDavClient(\Sabre_DAV_Client $client) {
 		$this->davClient = $client;
 	}
 
+	/**
+	 * Processes the configuration coming from the storage record and prepares the SabreDAV object.
+	 *
+	 * @return void
+	 * @throws \InvalidArgumentException
+	 */
 	public function processConfiguration() {
 		$urlInfo = parse_url($this->configuration['baseUrl']);
 		if ($urlInfo === FALSE) {
-			throw new InvalidArgumentException('Invalid base URL configured for WebDAV driver: ' . $this->configuration['baseUrl'], 1325771040);
+			throw new \InvalidArgumentException('Invalid base URL configured for WebDAV driver: ' . $this->configuration['baseUrl'], 1325771040);
 		}
 		$this->basePath = rtrim($urlInfo['path'], '/') . '/';
 
@@ -108,7 +121,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\A
 		$password = $urlInfo['pass'] ? $urlInfo['pass'] : $this->password;
 
 		$extConf = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['fal_webdav']);
-		$configuration['enableZeroByteFilesIndexing'] = (bool) $extConf['enableZeroByteFilesIndexing'];
+		$configuration['enableZeroByteFilesIndexing'] = (bool)$extConf['enableZeroByteFilesIndexing'];
 
 		$settings = array(
 			'baseUri' => $this->configuration['baseUrl'],
@@ -119,7 +132,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\A
 		unset($urlInfo['pass']);
 		$this->baseUrl = \TYPO3\CMS\Core\Utility\HttpUtility::buildUrl($urlInfo);
 
-		$this->davClient = new Sabre_DAV_Client($settings);
+		$this->davClient = new \Sabre_DAV_Client($settings);
 	}
 
 	/**
@@ -190,12 +203,12 @@ class Tx_FalWebdav_Driver_WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\A
 	 */
 	public function resourceExists($resourcePath) {
 		if ($resourcePath == '') {
-			throw new InvalidArgumentException('Resource path cannot be empty');
+			throw new \InvalidArgumentException('Resource path cannot be empty');
 		}
 		$url = $this->baseUrl . ltrim($resourcePath, '/');
 		try {
 			$this->executeDavRequest('HEAD', $url);
-		} catch (Sabre_DAV_Exception_NotFound $exception) {
+		} catch (\Sabre_DAV_Exception_NotFound $exception) {
 			return FALSE;
 		}
 		// TODO check if other status codes may also indicate that the file is present
@@ -292,7 +305,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\A
 	 * @param \TYPO3\CMS\Core\Resource\FileInterface $file
 	 * @param string $contents
 	 * @return bool TRUE if setting the contents succeeded
-	 * @throws RuntimeException if the operation failed
+	 * @throws \RuntimeException if the operation failed
 	 */
 	public function setFileContents(\TYPO3\CMS\Core\Resource\FileInterface $file, $contents) {
 		// Apache returns a "204 no content" status after a successful put operation
@@ -324,7 +337,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\A
 
 		$fileHandle = fopen($localFilePath, 'r');
 		if (!is_resource($fileHandle)) {
-			throw new RuntimeException('Could not open handle for ' . $localFilePath, 1325959310);
+			throw new \RuntimeException('Could not open handle for ' . $localFilePath, 1325959310);
 		}
 		$result = $this->executeDavRequest('PUT', $fileUrl, $fileHandle);
 
@@ -424,7 +437,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\A
 		$fileUrl = $this->getResourceUrl($file);
 		$fileHandle = fopen($localFilePath, 'r');
 		if (!is_resource($fileHandle)) {
-			throw new RuntimeException('Could not open handle for ' . $localFilePath, 1325959311);
+			throw new \RuntimeException('Could not open handle for ' . $localFilePath, 1325959311);
 		}
 
 		$this->removeCacheForPath(dirname($file->getIdentifier()));
@@ -531,7 +544,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\A
 			// TODO set cache lifetime
 			$this->directoryListingCache->set($cacheKey, $properties);
 		}
-		$propertyIterator = new ArrayIterator($properties);
+		$propertyIterator = new \ArrayIterator($properties);
 
 		// TODO handle errors
 
@@ -681,7 +694,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\A
 
 		try {
 			$result = $this->executeMoveRequest($file->getIdentifier(), $newPath);
-		} catch (Sabre_DAV_Exception $e) {
+		} catch (\Sabre_DAV_Exception $e) {
 			// TODO insert correct exception here
 			throw new \TYPO3\CMS\Core\Resource\Exception\FileOperationErrorException('Moving file ' . $file->getIdentifier()
 				. ' to ' . $newPath . ' failed.', 1325848030);
@@ -712,7 +725,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\A
 				// force overwriting the file (header Overwrite: T) because the Storage already handled possible conflicts
 				// for us
 			$result = $this->executeDavRequest('COPY', $oldFileUrl, NULL, array('Destination' => $newFileUrl, 'Overwrite' => 'T'));
-		} catch (Sabre_DAV_Exception $e) {
+		} catch (\Sabre_DAV_Exception $e) {
 			// TODO insert correct exception here
 			throw new \TYPO3\CMS\Core\Resource\Exception\FileOperationErrorException('Copying file ' . $file->getIdentifier() . ' to '
 				. $newFileIdentifier . ' failed.', 1325848030);
@@ -738,7 +751,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\A
 
 		try {
 			$result = $this->executeMoveRequest($folderToMove->getIdentifier(), $newFolderIdentifier);
-		} catch (Sabre_DAV_Exception $e) {
+		} catch (\Sabre_DAV_Exception $e) {
 			// TODO insert correct exception here
 			throw new \TYPO3\CMS\Core\Resource\Exception\FileOperationErrorException('Moving folder ' . $folderToMove->getIdentifier()
 				. ' to ' . $newFolderIdentifier . ' failed: ' . $e->getMessage(), 1326135944);
@@ -766,7 +779,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\A
 
 		try {
 			$result = $this->executeDavRequest('COPY', $oldFolderUrl, NULL, array('Destination' => $newFolderUrl, 'Overwrite' => 'T'));
-		} catch (Sabre_DAV_Exception $e) {
+		} catch (\Sabre_DAV_Exception $e) {
 			// TODO insert correct exception here
 			throw new \TYPO3\CMS\Core\Resource\Exception\FileOperationErrorException('Moving folder ' . $folderToMove->getIdentifier()
 				. ' to ' . $newFolderIdentifier . ' failed.', 1326135944);
@@ -922,7 +935,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\A
 	 * @param \TYPO3\CMS\Core\Resource\Folder $folder
 	 * @param string $newName The new folder name
 	 * @return string The new identifier of the folder if the operation succeeds
-	 * @throws RuntimeException if renaming the folder failed
+	 * @throws \RuntimeException if renaming the folder failed
 	 * @throws \TYPO3\CMS\Core\Resource\Exception\FileOperationErrorException
 	 */
 	public function renameFolder(\TYPO3\CMS\Core\Resource\Folder $folder, $newName) {
@@ -931,7 +944,7 @@ class Tx_FalWebdav_Driver_WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\A
 
 		try {
 			$result = $this->executeMoveRequest($sourcePath, $targetPath);
-		} catch (Sabre_DAV_Exception $e) {
+		} catch (\Sabre_DAV_Exception $e) {
 			// TODO insert correct exception here
 			throw new \TYPO3\CMS\Core\Resource\Exception\FileOperationErrorException('Renaming ' . $sourcePath . ' to '
 				. $targetPath . ' failed.', 1325848030);

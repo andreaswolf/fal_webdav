@@ -1,4 +1,6 @@
 <?php
+namespace TYPO3\FalWebdav\Tests\Backend;
+
 /*                                                                        *
  * This script belongs to the TYPO3 project.                              *
  *                                                                        *
@@ -26,15 +28,15 @@
  * @package TYPO3
  * @subpackage fal_webdav
  */
-class Tx_FalWebdav_Backend_TceMainHookTest extends Tx_Phpunit_TestCase {
+class TceMainHookTest extends \Tx_Phpunit_TestCase {
 
 	/**
-	 * @var Tx_FalWebdav_Backend_TceMainHook
+	 * @var \TYPO3\FalWebdav\Backend\TceMainHook
 	 */
 	protected $fixture;
 
 	public function setUp() {
-		$this->fixture = new Tx_FalWebdav_Backend_TceMainHook();
+		$this->fixture = new \TYPO3\FalWebdav\Backend\TceMainHook();
 	}
 
 	protected function prepareFieldArrayFixture(array $fieldValues) {
@@ -71,10 +73,10 @@ class Tx_FalWebdav_Backend_TceMainHookTest extends Tx_Phpunit_TestCase {
 			'password' => 'oldPassword'
 		));
 
-		$this->fixture->processDatamap_preProcessFieldArray($fieldArray, 'sys_file_storage', -1, new StdClass());
+		$this->fixture->processDatamap_preProcessFieldArray($fieldArray, 'sys_file_storage', -1, new \StdClass());
 
 		$this->assertEquals('newUser', $fieldArray['configuration']['data']['sDEF']['lDEF']['username']['vDEF']);
-		$this->assertEquals('newPass', Tx_FalWebdav_Utility_Encryption::decryptPassword($fieldArray['configuration']['data']['sDEF']['lDEF']['password']['vDEF']));
+		$this->assertEquals('newPass', \TYPO3\FalWebdav\Utility\Encryption::decryptPassword($fieldArray['configuration']['data']['sDEF']['lDEF']['password']['vDEF']));
 		$this->assertEquals('http://localhost/some/storage/', $fieldArray['configuration']['data']['sDEF']['lDEF']['baseUrl']['vDEF']);
 	}
 
@@ -88,9 +90,9 @@ class Tx_FalWebdav_Backend_TceMainHookTest extends Tx_Phpunit_TestCase {
 			'password' => 'oldPassword'
 		));
 
-		$this->fixture->processDatamap_preProcessFieldArray($fieldArray, 'sys_file_storage', -1, new StdClass());
+		$this->fixture->processDatamap_preProcessFieldArray($fieldArray, 'sys_file_storage', -1, new \StdClass());
 
 		$this->assertEquals('oldUser', $fieldArray['configuration']['data']['sDEF']['lDEF']['username']['vDEF']);
-		$this->assertEquals('oldPassword', Tx_FalWebdav_Utility_Encryption::decryptPassword($fieldArray['configuration']['data']['sDEF']['lDEF']['password']['vDEF']));
+		$this->assertEquals('oldPassword', \TYPO3\FalWebdav\Utility\Encryption::decryptPassword($fieldArray['configuration']['data']['sDEF']['lDEF']['password']['vDEF']));
 	}
 }

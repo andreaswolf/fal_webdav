@@ -11,7 +11,7 @@ set_include_path($newPath . PATH_SEPARATOR . get_include_path());
 
 /** @var \TYPO3\CMS\Core\Resource\Driver\DriverRegistry $registry */
 $registry = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\CMS\Core\Resource\Driver\DriverRegistry');
-$registry->registerDriverClass('Tx_FalWebdav_Driver_WebDavDriver', 'WebDav', 'WebDAV', 'FILE:EXT:fal_webdav/Configuration/FlexForm/WebDavDriverFlexForm.xml');
+$registry->registerDriverClass('TYPO3\FalWebdav\Driver\WebDavDriver', 'WebDav', 'WebDAV', 'FILE:EXT:fal_webdav/Configuration/FlexForm/WebDavDriverFlexForm.xml');
 
 $TYPO3_CONF_VARS['SC_OPTIONS']['t3lib/class.t3lib_tcemain.php']['processDatamapClass']['fal_webdav'] = 'EXT:fal_webdav/Classes/Backend/TceMainHook.php:&Tx_FalWebdav_Backend_TceMainHook';
 

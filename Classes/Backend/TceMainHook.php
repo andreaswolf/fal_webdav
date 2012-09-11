@@ -1,19 +1,20 @@
 <?php
+namespace TYPO3\FalWebdav\Backend;
 
 /**
  * TCEmain integration for the WebDAV driver.
  *
  * @author Andreas Wolf <andreas.wolf@ikt-werk.de>
  */
-class Tx_FalWebdav_Backend_TceMainHook {
+class TceMainHook {
 	/**
 	 * @param array $incomingFieldArray
 	 * @param string $table
 	 * @param integer|string $id
-	 * @param t3lib_TCEmain $tceMainObject
+	 * @param \TYPO3\CMS\Core\DataHandler\DataHandler $tceMainObject
 	 * @return mixed
 	 */
-	public function processDatamap_preProcessFieldArray(&$incomingFieldArray, $table, $id, t3lib_TCEmain $tceMainObject) {
+	public function processDatamap_preProcessFieldArray(&$incomingFieldArray, $table, $id, \TYPO3\CMS\Core\DataHandler\DataHandler $tceMainObject) {
 		if ($table !== 'sys_file_storage') {
 			return;
 		}
@@ -25,7 +26,7 @@ class Tx_FalWebdav_Backend_TceMainHook {
 		$username = &$incomingFieldArray['configuration']['data']['sDEF']['lDEF']['username']['vDEF'];
 		$password = &$incomingFieldArray['configuration']['data']['sDEF']['lDEF']['password']['vDEF'];
 
-		list($cleanedUrl, $extractedUsername, $extractedPassword) = Tx_FalWebdav_Utility_UrlTools::extractUsernameAndPasswordFromUrl($url);
+		list($cleanedUrl, $extractedUsername, $extractedPassword) = \TYPO3\FalWebdav\Utility\UrlTools::extractUsernameAndPasswordFromUrl($url);
 		if ($cleanedUrl != $url) {
 			$url = $cleanedUrl;
 		}
@@ -40,7 +41,7 @@ class Tx_FalWebdav_Backend_TceMainHook {
 			return;
 		}
 
-		$password = Tx_FalWebdav_Utility_Encryption::encryptPassword($password);
+		$password = \TYPO3\FalWebdav\Utility\Encryption::encryptPassword($password);
 	}
 
 }

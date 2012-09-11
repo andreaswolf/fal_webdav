@@ -1,4 +1,6 @@
 <?php
+namespace TYPO3\FalWebdav\Tests\Driver;
+
 /*                                                                        *
  * This script belongs to the TYPO3 project.                              *
  *                                                                        *
@@ -19,8 +21,6 @@
  * The TYPO3 project - inspiring people to share!                         *
  *                                                                        */
 
-require_once PATH_site . 'tests/t3lib/file/BaseTestCase.php';
-
 /**
  * Testcase for the WebDAV driver
  *
@@ -28,10 +28,10 @@ require_once PATH_site . 'tests/t3lib/file/BaseTestCase.php';
  * @package TYPO3
  * @subpackage fal_webdav
  */
-class Tx_FalWebdav_Driver_WebDavDriverTest extends t3lib_file_BaseTestCase {
+class Tx_FalWebdav_Driver_WebDavDriverTest extends \TYPO3\CMS\Core\Tests\Unit\Resource\BaseTestCase {
 
 	/**
-	 * @var Tx_FalWebdav_Driver_WebDavDriver
+	 * @var \TYPO3\FalWebdav\Driver\WebDavDriver
 	 */
 	private $fixture;
 
@@ -48,15 +48,15 @@ class Tx_FalWebdav_Driver_WebDavDriverTest extends t3lib_file_BaseTestCase {
 		return $this->getMock('Sabre_DAV_Client', array(), array(), '', FALSE);
 	}
 
-	protected function prepareFixture(Sabre_DAV_Client $client = NULL, $storage = NULL) {
+	protected function prepareFixture(\Sabre_DAV_Client $client = NULL, $storage = NULL) {
 		if ($client === NULL) {
 			$client = $this->mockDavClient();
 		}
 		if ($storage === NULL) {
-			$storage = $this->getMock('t3lib_file_Storage', array(), array(), '', FALSE);
+			$storage = $this->getMock('TYPO3\CMS\Core\Resource\ResourceStorage', array(), array(), '', FALSE);
 		}
 
-		$this->fixture = new Tx_FalWebdav_Driver_WebDavDriver(array('baseUrl' => $this->baseUrl));
+		$this->fixture = new \TYPO3\FalWebdav\Driver\WebDavDriver(array('baseUrl' => $this->baseUrl));
 		$this->fixture->setStorage($storage);
 		$this->fixture->processConfiguration();
 		$this->fixture->injectDavClient($client);
@@ -67,7 +67,7 @@ class Tx_FalWebdav_Driver_WebDavDriverTest extends t3lib_file_BaseTestCase {
 	 * @test
 	 */
 	public function createFileIssuesCorrectCommandOnServer() {
-		/** @var $clientMock Sabre_DAV_Client */
+		/** @var $clientMock \Sabre_DAV_Client */
 		$clientMock = $this->mockDavClient();
 		$clientMock->expects($this->once())->method('request')->with($this->equalTo('PUT'), $this->stringEndsWith('/someFile'));
 		$this->prepareFixture($clientMock);
@@ -78,10 +78,10 @@ class Tx_FalWebdav_Driver_WebDavDriverTest extends t3lib_file_BaseTestCase {
 
 	/**
 	 * @test
-	 * @return t3lib_file_Folder
+	 * @return \TYPO3\CMS\Core\Resource\Folder
 	 */
 	public function createFolderIssuesCorrectCreateCommandOnServer() {
-		/** @var $clientMock Sabre_DAV_Client */
+		/** @var $clientMock \Sabre_DAV_Client */
 		$clientMock = $this->mockDavClient();
 		$clientMock->expects($this->at(0))->method('request')->with($this->equalTo('MKCOL'), $this->stringEndsWith('/mainFolder/subFolder/'));
 		$this->prepareFixture($clientMock);
@@ -93,9 +93,9 @@ class Tx_FalWebdav_Driver_WebDavDriverTest extends t3lib_file_BaseTestCase {
 	/**
 	 * @test
 	 * @depends createFolderIssuesCorrectCreateCommandOnServer
-	 * @param t3lib_file_Folder $folder
+	 * @param \TYPO3\CMS\Core\Resource\Folder $folder
 	 */
-	public function createFolderReturnsObjectWithCorrectIdentifier(t3lib_file_Folder $folder) {
+	public function createFolderReturnsObjectWithCorrectIdentifier(\TYPO3\CMS\Core\Resource\Folder $folder) {
 		$this->assertEquals('/mainFolder/subFolder/', $folder->getIdentifier());
 	}
 
@@ -105,7 +105,7 @@ class Tx_FalWebdav_Driver_WebDavDriverTest extends t3lib_file_BaseTestCase {
 	public function copyFileToTemporaryPathCreatesLocalCopyOfFile() {
 		$fileContents = uniqid();
 
-		/** @var $clientMock Sabre_DAV_Client */
+		/** @var $clientMock \Sabre_DAV_Client */
 		$clientMock = $this->mockDavClient();
 		$clientMock->expects($this->once())->method('request')->with($this->equalTo('GET'), $this->stringEndsWith('/mainFolder/file.txt'))
 			->will($this->returnValue(array('body' => $fileContents)));
@@ -125,7 +125,7 @@ class Tx_FalWebdav_Driver_WebDavDriverTest extends t3lib_file_BaseTestCase {
 		$mockedFile = $this->getSimpleFileMock('/someFile');
 		$mockedFolder = $this->getSimpleFolderMock('/targetFolder/');
 
-		/** @var $clientMock Sabre_DAV_Client */
+		/** @var $clientMock \Sabre_DAV_Client */
 		$clientMock = $this->mockDavClient();
 			// TODO make the parameter matching here more special as soon as PHPUnit supports doing so
 		$clientMock->expects($this->once())->method('request')->with($this->equalTo('MOVE'), $this->stringEndsWith('/someFile'),
@@ -178,7 +178,7 @@ class Tx_FalWebdav_Driver_WebDavDriverTest extends t3lib_file_BaseTestCase {
 	 */
 	public function setFileContentsIssuesCorrectCommandOnServer() {
 		$fileContents = uniqid();
-		/** @var $clientMock Sabre_DAV_Client */
+		/** @var $clientMock \Sabre_DAV_Client */
 		$clientMock = $this->mockDavClient();
 		$clientMock->expects($this->once())->method('request')->with($this->equalTo('PUT'), $this->stringEndsWith('/someFile'), $fileContents);
 		$this->prepareFixture($clientMock);
@@ -204,7 +204,7 @@ class Tx_FalWebdav_Driver_WebDavDriverTest extends t3lib_file_BaseTestCase {
 	 * @test
 	 */
 	public function deleteFolderIssuesCorrectCommandOnServer() {
-		/** @var $clientMock Sabre_DAV_Client */
+		/** @var $clientMock \Sabre_DAV_Client */
 		$clientMock = $this->mockDavClient();
 		$clientMock->expects($this->once())->method('request')->with($this->equalTo('DELETE'), $this->stringEndsWith('/someFolder/'),
 			$this->contains('Infinity'));
@@ -222,7 +222,7 @@ class Tx_FalWebdav_Driver_WebDavDriverTest extends t3lib_file_BaseTestCase {
 
 			// 192.0.2.0/24 is a network that should be used in documentation and for tests, but not in the wild;
 			// see http://tools.ietf.org/html/rfc5737
-		$client = new Sabre_DAV_Client(array('baseUri' => 'http://192.0.2.1/', 'timeout' => 5));
+		$client = new \Sabre_DAV_Client(array('baseUri' => 'http://192.0.2.1/', 'timeout' => 5));
 
 		print_r($client->request('GET', '/something'));
 	}

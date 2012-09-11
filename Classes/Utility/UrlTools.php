@@ -1,11 +1,12 @@
 <?php
+namespace TYPO3\FalWebdav\Utility;
 
 /**
  * Utility methods for encrypting/decrypting data. Currently only supports Blowfish encryption in CBC mode,
  *
  * @author Andreas Wolf <andreas.wolf@ikt-werk.de>
  */
-class Tx_FalWebdav_Utility_UrlTools {
+class UrlTools {
 	/**
 	 * Helper method to extract the username and password from a url. Returns username, password and the url without
 	 * authentication info.
@@ -25,6 +26,6 @@ class Tx_FalWebdav_Utility_UrlTools {
 			$pass = $urlInfo['pass'];
 			unset($urlInfo['pass']);
 		}
-		return array(t3lib_utility_Http::buildUrl($urlInfo), $user, $pass);
+		return array(\TYPO3\CMS\Core\Utility\HttpUtility::buildUrl($urlInfo), $user, $pass);
 	}
 }

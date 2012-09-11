@@ -1,10 +1,12 @@
 <?php
+namespace TYPO3\FalWebdav\Tests\Utility;
+
 /**
  * Testcase for the url tools class
  *
  * @author Andreas Wolf <andreas.wolf@ikt-werk.de>
  */
-class Tx_FalWebdav_Utility_UrlToolsTest extends Tx_Phpunit_TestCase {
+class UrlToolsTest extends \Tx_Phpunit_TestCase {
 
 	public function urlDataProvider() {
 		return array(
@@ -32,7 +34,7 @@ class Tx_FalWebdav_Utility_UrlToolsTest extends Tx_Phpunit_TestCase {
 	 * @dataProvider urlDataProvider
 	 */
 	public function usernameAndPasswordAreProperlyExtractedFromUrl($url, $expectedOutput) {
-		$output = Tx_FalWebdav_Utility_UrlTools::extractUsernameAndPasswordFromUrl($url);
+		$output = \TYPO3\FalWebdav\Utility\UrlTools::extractUsernameAndPasswordFromUrl($url);
 
 		$this->assertEquals($expectedOutput, $output);
 	}

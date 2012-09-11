@@ -1,4 +1,5 @@
 <?php
+namespace TYPO3\FalWebdav\Utility;
 
 /**
  * Utility methods for encrypting/decrypting data. Currently only supports Blowfish encryption in CBC mode,
@@ -7,7 +8,7 @@
  *
  * @author Andreas Wolf <andreas.wolf@ikt-werk.de>
  */
-class Tx_FalWebdav_Utility_Encryption {
+class EncryptionUtility {
 
 	protected static $encryptionMethod = MCRYPT_BLOWFISH;
 
@@ -24,6 +25,8 @@ class Tx_FalWebdav_Utility_Encryption {
 	/**
 	 * Returns an initialization vector suitable for the chosen encryption method.
 	 *
+	 * @param string $encryptionMethod
+	 * @param string $encryptionMode
 	 * @return string
 	 */
 	protected static function getInitializationVector($encryptionMethod = NULL, $encryptionMode = NULL) {
@@ -43,6 +46,8 @@ class Tx_FalWebdav_Utility_Encryption {
 	 * Creates and returns a resource pointer for the encryption method. This is required for e.g. retrieving an
 	 * encryption key.
 	 *
+	 * @param string $encryptionMethod
+	 * @param string $encryptionMode
 	 * @return resource
 	 */
 	protected static function createEncryptionContext($encryptionMethod = NULL, $encryptionMode = NULL) {
@@ -115,7 +120,7 @@ class Tx_FalWebdav_Utility_Encryption {
 		}
 
 		if (substr_count($encryptedPassword, '$') > 0) {
-			$passwordParts = t3lib_div::trimExplode('$', $encryptedPassword, TRUE);
+			$passwordParts = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode('$', $encryptedPassword, TRUE);
 				// Base64 decoding the password is done below
 			$encryptedPassword = $passwordParts[3];
 
