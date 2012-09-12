@@ -52,7 +52,7 @@ class WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\AbstractDriver {
 	protected $basePath = '';
 
 	/**
-	 * @var \Sabre_DAV_Client
+	 * @var \TYPO3\FalWebdav\Dav\WebDavClient
 	 */
 	protected $davClient;
 
@@ -102,9 +102,9 @@ class WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\AbstractDriver {
 	/**
 	 * Inject method for the DAV client. Mostly useful for unit tests.
 	 *
-	 * @param \Sabre_DAV_Client $client
+	 * @param \TYPO3\FalWebdav\Dav\WebDavClient $client
 	 */
-	public function injectDavClient(\Sabre_DAV_Client $client) {
+	public function injectDavClient(\TYPO3\FalWebdav\Dav\WebDavClient $client) {
 		$this->davClient = $client;
 	}
 
@@ -147,7 +147,9 @@ class WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\AbstractDriver {
 		$this->baseUrl = rtrim(\TYPO3\CMS\Core\Utility\HttpUtility::buildUrl($urlInfo), '/') . '/';
 		$settings['baseUri'] = $this->baseUrl;
 
-		$this->davClient = new \Sabre_DAV_Client($settings);
+		$this->davClient = new \TYPO3\FalWebdav\Dav\WebDavClient($settings);
+
+		$this->davClient->setCertificateVerification($this->configuration['disableCertificateVerification'] != 1);
 	}
 
 	/**

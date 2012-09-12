@@ -17,6 +17,14 @@
 					</config>
 				</TCEforms>
 			</baseUrl>
+			<disableCertificateVerification>
+				<TCEforms>
+					<label>Disable server certificate verification</label>
+					<config>
+						<type>check</type>
+					</config>
+				</TCEforms>
+			</disableCertificateVerification>
 			<useAuthentication>
 				<TCEforms>
 					<label>Use authentication?</label>
