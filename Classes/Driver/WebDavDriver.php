@@ -26,8 +26,10 @@ namespace TYPO3\FalWebdav\Driver;
  *
  *  This copyright notice MUST APPEAR in all copies of the script!
  ***************************************************************/
-
 include_once 'Sabre/autoload.php';
+
+use TYPO3\CMS\Core\Utility\GeneralUtility;
+
 
 class WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\AbstractDriver {
 
@@ -70,6 +72,11 @@ class WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\AbstractDriver {
 	 */
 	protected $directoryListingCache;
 
+	/**
+	 * @var \TYPO3\CMS\Core\Log\Logger
+	 */
+	protected $logger;
+
 	public function __construct(array $configuration = array()) {
 		// TODO Iterate through all string properties and trim them...
 		$configuration['baseUrl'] = trim($configuration['baseUrl']);
@@ -80,6 +87,8 @@ class WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\AbstractDriver {
 		$this->username = $configuration['username'];
 
 		$this->directoryListingCache = $GLOBALS['typo3CacheManager']->getCache('tx_falwebdav_directorylisting');
+
+		$this->logger = GeneralUtility::makeInstance('TYPO3\CMS\Core\Log\LogManager')->getLogger(__CLASS__);
 
 		parent::__construct($configuration);
 	}
@@ -173,7 +182,16 @@ class WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\AbstractDriver {
 	 * @return array
 	 */
 	protected function executeDavRequest($method, $url, $body = NULL, array $headers = array()) {
-		return $this->davClient->request($method, $url, $body, $headers);
+		try {
+			return $this->davClient->request($method, $url, $body, $headers);
+		} catch (\Exception $exception) {
+			$this->logger->error(sprintf(
+				'Error while executing DAV request. Original message: "%s" (Exception id: %u)',
+				$exception->getMessage(), $exception->getCode()
+			));
+			$this->storage->markAsTemporaryOffline();
+			return array();
+		}
 	}
 
 
@@ -454,20 +472,28 @@ class WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\AbstractDriver {
 	public function getFileInfoByIdentifier($identifier) {
 		$fileUrl = $this->baseUrl . ltrim($identifier, '/');
 
-		$properties = $this->executeDavRequest('PROPFIND', $fileUrl);
-		$properties = $this->davClient->parseMultiStatus($properties['body']);
-		$properties = $properties[$this->basePath . ltrim($identifier, '/')][200];
+		try {
+			$properties = $this->executeDavRequest('PROPFIND', $fileUrl);
+			$properties = $this->davClient->parseMultiStatus($properties['body']);
+			$properties = $properties[$this->basePath . ltrim($identifier, '/')][200];
 
-		// TODO make this more robust (check if properties are available etc.)
-		$fileInfo = array(
-			'mtime' => strtotime($properties['{DAV:}getlastmodified']),
-			'ctime' => strtotime($properties['{DAV:}creationdate']),
-			'mimetype' => $properties['{DAV:}getcontenttype'],
-			'name' => basename($identifier),
-			'size' => $properties['{DAV:}getcontentlength'],
-			'identifier' => $identifier,
-			'storage' => $this->storage->getUid()
-		);
+			// TODO make this more robust (check if properties are available etc.)
+			$fileInfo = array(
+				'mtime' => strtotime($properties['{DAV:}getlastmodified']),
+				'ctime' => strtotime($properties['{DAV:}creationdate']),
+				'mimetype' => $properties['{DAV:}getcontenttype'],
+				'name' => basename($identifier),
+				'size' => $properties['{DAV:}getcontentlength'],
+				'identifier' => $identifier,
+				'storage' => $this->storage->getUid()
+			);
+		} catch (\Exception $exception) {
+			$fileInfo = array(
+				'name' => basename($identifier),
+				'identifier' => $identifier,
+				'storage' => $this->storage->getUid()
+			);
+		}
 
 		return $fileInfo;
 	}
@@ -577,6 +603,7 @@ class WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\AbstractDriver {
 			if (empty($entry)) {
 				continue;
 			}
+
 			$items[$key] = $entry;
 
 			--$c;
