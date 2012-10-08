@@ -73,7 +73,7 @@ class WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\AbstractDriver {
 	public function __construct(array $configuration = array()) {
 		// TODO Iterate through all string properties and trim them...
 		$configuration['baseUrl'] = trim($configuration['baseUrl']);
-		$password = \TYPO3\FalWebdav\Utility\Encryption::decryptPassword($configuration['password']);
+		$password = \TYPO3\FalWebdav\Utility\EncryptionUtility::decryptPassword($configuration['password']);
 
 			// TODO check useAuthentication configuration option
 		$this->password = $password;
