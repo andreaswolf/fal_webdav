@@ -41,7 +41,7 @@ class WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\AbstractDriver {
 	 *
 	 * @var string
 	 */
-	protected $baseUrl;
+	protected $baseUrl = '';
 
 	/**
 	 * The base path of the WebDAV store. This is the URL without protocol, host and port (i.e., only the path on the host).
@@ -49,7 +49,7 @@ class WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\AbstractDriver {
 	 *
 	 * @var string
 	 */
-	protected $basePath;
+	protected $basePath = '';
 
 	/**
 	 * @var \Sabre_DAV_Client
@@ -61,14 +61,14 @@ class WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\AbstractDriver {
 	 *
 	 * @var string
 	 */
-	protected $username;
+	protected $username = '';
 
 	/**
 	 * The password to use for connecting to the storage.
 	 *
 	 * @var string
 	 */
-	protected $password;
+	protected $password = '';
 
 	/**
 	 * @var \TYPO3\CMS\Core\Cache\Frontend\AbstractFrontend
@@ -81,14 +81,6 @@ class WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\AbstractDriver {
 	protected $logger;
 
 	public function __construct(array $configuration = array()) {
-		// TODO Iterate through all string properties and trim them...
-		$configuration['baseUrl'] = trim($configuration['baseUrl']);
-		$password = \TYPO3\FalWebdav\Utility\EncryptionUtility::decryptPassword($configuration['password']);
-
-		// TODO check useAuthentication configuration option
-		$this->password = $password;
-		$this->username = $configuration['username'];
-
 		$this->directoryListingCache = $GLOBALS['typo3CacheManager']->getCache('tx_falwebdav_directorylisting');
 
 		$this->logger = GeneralUtility::makeInstance('TYPO3\CMS\Core\Log\LogManager')->getLogger(__CLASS__);
@@ -123,26 +115,37 @@ class WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\AbstractDriver {
 	 * @throws \InvalidArgumentException
 	 */
 	public function processConfiguration() {
-		$urlInfo = parse_url($this->configuration['baseUrl']);
+		foreach ($this->configuration as $key => $value) {
+			$this->configuration[$key] = trim($value);
+		}
+
+		$baseUrl = $this->configuration['baseUrl'];
+
+		$urlInfo = parse_url($baseUrl);
 		if ($urlInfo === FALSE) {
 			throw new \InvalidArgumentException('Invalid base URL configured for WebDAV driver: ' . $this->configuration['baseUrl'], 1325771040);
 		}
 		$this->basePath = rtrim($urlInfo['path'], '/') . '/';
 
-		$username = $urlInfo['user'] ? $urlInfo['user'] : $this->username;
-		$password = $urlInfo['pass'] ? $urlInfo['pass'] : $this->password;
-
 		$extConf = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['fal_webdav']);
-		$configuration['enableZeroByteFilesIndexing'] = (bool)$extConf['enableZeroByteFilesIndexing'];
+		$configuration['enableZeroByteFilesIndexing'] = (boolean)$extConf['enableZeroByteFilesIndexing'];
 
-		$settings = array(
-			'baseUri' => $this->configuration['baseUrl'],
-			'userName' => $username,
-			'password' => $password
-		);
+		// Use authentication only if enabled
+		$settings = array();
+		if ($this->configuration['useAuthentication']) {
+			$this->username = $urlInfo['user'] ? $urlInfo['user'] : $this->configuration['username'];
+			$this->password = $urlInfo['pass'] ? $urlInfo['pass'] : \TYPO3\FalWebdav\Utility\EncryptionUtility::decryptPassword($this->configuration['password']);
+			$settings = array(
+				'userName' => $this->username,
+				'password' => $this->password
+			);
+		}
+
+		// create cleaned URL without credentials
 		unset($urlInfo['user']);
 		unset($urlInfo['pass']);
-		$this->baseUrl = \TYPO3\CMS\Core\Utility\HttpUtility::buildUrl($urlInfo);
+		$this->baseUrl = rtrim(\TYPO3\CMS\Core\Utility\HttpUtility::buildUrl($urlInfo), '/') . '/';
+		$settings['baseUri'] = $this->baseUrl;
 
 		$this->davClient = new \Sabre_DAV_Client($settings);
 	}
