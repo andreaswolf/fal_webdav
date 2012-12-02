@@ -11,10 +11,10 @@ class TceMainHook {
 	 * @param array $incomingFieldArray
 	 * @param string $table
 	 * @param integer|string $id
-	 * @param \TYPO3\CMS\Core\DataHandler\DataHandler $tceMainObject
+	 * @param \TYPO3\CMS\Core\DataHandling\DataHandler $tceMainObject
 	 * @return mixed
 	 */
-	public function processDatamap_preProcessFieldArray(&$incomingFieldArray, $table, $id, \TYPO3\CMS\Core\DataHandler\DataHandler $tceMainObject) {
+	public function processDatamap_preProcessFieldArray(&$incomingFieldArray, $table, $id, \TYPO3\CMS\Core\DataHandling\DataHandler $tceMainObject) {
 		if ($table !== 'sys_file_storage') {
 			return;
 		}
@@ -41,7 +41,7 @@ class TceMainHook {
 			return;
 		}
 
-		$password = \TYPO3\FalWebdav\Utility\Encryption::encryptPassword($password);
+		$password = \TYPO3\FalWebdav\Utility\EncryptionUtility::encryptPassword($password);
 	}
 
 }
