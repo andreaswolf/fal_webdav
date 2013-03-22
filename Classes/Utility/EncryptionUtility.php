@@ -1,6 +1,8 @@
 <?php
 namespace TYPO3\FalWebdav\Utility;
 
+use \TYPO3\CMS\Core\Utility;
+
 /**
  * Utility methods for encrypting/decrypting data. Currently only supports Blowfish encryption in CBC mode,
  *
@@ -14,12 +16,40 @@ class EncryptionUtility {
 
 	protected static $encryptionMode = MCRYPT_MODE_CBC;
 
+	/**
+	 * @var \TYPO3\CMS\Core\Log\Logger
+	 */
+	protected static $logger;
+
 	public static function getEncryptionMethod() {
 		return self::$encryptionMethod;
 	}
 
 	public static function getEncryptionMode() {
 		return self::$encryptionMode;
+	}
+
+	/**
+	 * Returns TRUE if the mcrypt extension is available.
+	 *
+	 * @return bool
+	 */
+	public static function isMcryptAvailable() {
+		return extension_loaded('mcrypt');
+	}
+
+	/**
+	 * @return \TYPO3\CMS\Core\Log\Logger
+	 */
+	protected static function getLogger() {
+		if (self::$logger === NULL) {
+			/** @var $logManager \TYPO3\CMS\Core\Log\LogManager */
+			$logManager = Utility\GeneralUtility::makeInstance('TYPO3\CMS\Core\Log\LogManager');
+
+			self::$logger = $logManager->getLogger(__CLASS__);
+		}
+
+		return self::$logger;
 	}
 
 	/**
@@ -85,6 +115,10 @@ class EncryptionUtility {
 		if ($value == '') {
 			return '';
 		}
+		if (!self::isMcryptAvailable()) {
+			self::getLogger()->error('Encryption utility is not available. See reports module for more information.');
+			return '';
+		}
 
 		$td = self::createEncryptionContext();
 		$iv = self::getInitializationVector();
@@ -116,6 +150,10 @@ class EncryptionUtility {
 	 */
 	public static function decryptPassword($encryptedPassword) {
 		if ($encryptedPassword == '') {
+			return '';
+		}
+		if (!self::isMcryptAvailable()) {
+			self::getLogger()->error('Encryption utility is not available. See reports module for more information.');
 			return '';
 		}
 

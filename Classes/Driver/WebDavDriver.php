@@ -31,6 +31,9 @@ include_once 'Sabre/autoload.php';
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 
+/**
+ * The driver class for WebDAV storages.
+ */
 class WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\AbstractDriver {
 
 	/**
