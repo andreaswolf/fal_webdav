@@ -15,7 +15,7 @@ $EM_CONF[$_EXTKEY] = array(
 	'description' => 'Provides a WebDAV driver for the TYPO3 File Abstraction Layer.',
 	'category' => 'be',
 	'author' => 'Andreas Wolf',
-	'author_email' => 'andreas.wolf@ikt-werk.de',
+	'author_email' => 'andreas.wolf@typo3.org',
 	'shy' => '',
 	'dependencies' => '',
 	'conflicts' => '',
@@ -32,6 +32,7 @@ $EM_CONF[$_EXTKEY] = array(
 	'version' => '0.0.0',
 	'constraints' => array(
 		'depends' => array(
+			'typo3' => '6.0.0-'
 		),
 		'conflicts' => array(
 		),
