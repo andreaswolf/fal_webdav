@@ -187,10 +187,14 @@ class WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\AbstractDriver {
 	protected function executeDavRequest($method, $url, $body = NULL, array $headers = array()) {
 		try {
 			return $this->davClient->request($method, $url, $body, $headers);
-		} catch (\Exception $exception) {
+		} catch (\Sabre_DAV_Exception_NotFound $exception) {
+			// If a file is not found, we have to deal with that on a higher level, so throw the exception again
+			throw $exception;
+		} catch (\Sabre_DAV_Exception $exception) {
+			// log all other exceptions
 			$this->logger->error(sprintf(
-				'Error while executing DAV request. Original message: "%s" (Exception id: %u)',
-				$exception->getMessage(), $exception->getCode()
+				'Error while executing DAV request. Original message: "%s" (Exception %s, id: %u)',
+				$exception->getMessage(), get_class($exception), $exception->getCode()
 			));
 			$this->storage->markAsTemporaryOffline();
 			return array();
