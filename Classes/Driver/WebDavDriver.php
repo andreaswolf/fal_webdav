@@ -210,13 +210,25 @@ class WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\AbstractDriver {
 	 * @return array
 	 */
 	protected function davPropFind($url) {
-		return $this->davClient->propfind($url, array(
-			'{DAV:}resourcetype',
-			'{DAV:}creationdate',
-			'{DAV:}getcontentlength',
-			'{DAV:}getlastmodified'
-		), 1);
-		// TODO throw exception on error
+		try {
+			return $this->davClient->propfind($url, array(
+				'{DAV:}resourcetype',
+				'{DAV:}creationdate',
+				'{DAV:}getcontentlength',
+				'{DAV:}getlastmodified'
+			), 1);
+		} catch (\Sabre_DAV_Exception_NotFound $exception) {
+			// If a file is not found, we have to deal with that on a higher level, so throw the exception again
+			throw $exception;
+		} catch (\Sabre_DAV_Exception $exception) {
+			// log all other exceptions
+			$this->logger->error(sprintf(
+				'Error while executing DAV PROPFIND request. Original message: "%s" (Exception %s, id: %u)',
+				$exception->getMessage(), get_class($exception), $exception->getCode()
+			));
+			$this->storage->markAsTemporaryOffline();
+			return array();
+		}
 	}
 
 	/**
@@ -494,7 +506,7 @@ class WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\AbstractDriver {
 				'identifier' => $identifier,
 				'storage' => $this->storage->getUid()
 			);
-		} catch (\Exception $exception) {
+		} catch (\Sabre_DAV_Exception $exception) {
 			$fileInfo = array(
 				'name' => basename($identifier),
 				'identifier' => $identifier,
@@ -545,6 +557,7 @@ class WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\AbstractDriver {
 		$folderIdentifier = $parentFolder->getIdentifier() . $name . '/';
 		return $this->getFolder($folderIdentifier);
 	}
+
 	/**
 	 * Generic handler method for directory listings - gluing together the listing items is done
 	 *
@@ -577,17 +590,18 @@ class WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\AbstractDriver {
 			// TODO set cache lifetime
 			$this->directoryListingCache->set($cacheKey, $properties);
 		}
+
+		// if we have only one entry, this is the folder we are currently in, so there are no items -> return an empty array
+		if (count($properties) == 1) {
+			return array();
+		}
+
 		$propertyIterator = new \ArrayIterator($properties);
 
 		// TODO handle errors
 
 		if ($path !== '' && $path != '/') {
 			$path = '/' . trim($path, '/') . '/';
-		}
-
-			// if we have only one entry, this is the folder we are currently in, so there are no items -> return an empty array
-		if (count($properties) == 1) {
-			return array();
 		}
 
 		$c = $numberOfItems > 0 ? $numberOfItems : $propertyIterator->count();
