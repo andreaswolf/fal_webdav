@@ -26,13 +26,14 @@ namespace TYPO3\FalWebdav\Dav;
  *
  *  This copyright notice MUST APPEAR in all copies of the script!
  ***************************************************************/
-
 include_once 'Sabre/autoload.php';
+
+use Sabre\DAV\Client;
 
 /**
  * Helper class to circumvent limitations in SabreDAV's support for cURL's certificate verification options.
  */
-class WebDavClient extends \Sabre_DAV_Client {
+class WebDavClient extends Client {
 
 	/**
 	 * Trigger to enable/disable peer certificate verification

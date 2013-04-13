@@ -28,6 +28,7 @@ namespace TYPO3\FalWebdav\Driver;
  ***************************************************************/
 include_once 'Sabre/autoload.php';
 
+use Sabre\DAV\Client;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 
@@ -192,10 +193,10 @@ class WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\AbstractDriver {
 	protected function executeDavRequest($method, $url, $body = NULL, array $headers = array()) {
 		try {
 			return $this->davClient->request($method, $url, $body, $headers);
-		} catch (\Sabre_DAV_Exception_NotFound $exception) {
+		} catch (\Sabre\DAV\Exception\NotFound $exception) {
 			// If a file is not found, we have to deal with that on a higher level, so throw the exception again
 			throw $exception;
-		} catch (\Sabre_DAV_Exception $exception) {
+		} catch (\Sabre\DAV\Exception $exception) {
 			// log all other exceptions
 			$this->logger->error(sprintf(
 				'Error while executing DAV request. Original message: "%s" (Exception %s, id: %u)',
@@ -222,10 +223,10 @@ class WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\AbstractDriver {
 				'{DAV:}getcontentlength',
 				'{DAV:}getlastmodified'
 			), 1);
-		} catch (\Sabre_DAV_Exception_NotFound $exception) {
+		} catch (\Sabre\DAV\Exception\NotFound $exception) {
 			// If a file is not found, we have to deal with that on a higher level, so throw the exception again
 			throw $exception;
-		} catch (\Sabre_DAV_Exception $exception) {
+		} catch (\Sabre\DAV\Exception $exception) {
 			// log all other exceptions
 			$this->logger->error(sprintf(
 				'Error while executing DAV PROPFIND request. Original message: "%s" (Exception %s, id: %u)',
@@ -250,7 +251,7 @@ class WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\AbstractDriver {
 		$url = $this->baseUrl . ltrim($resourcePath, '/');
 		try {
 			$this->executeDavRequest('HEAD', $url);
-		} catch (\Sabre_DAV_Exception_NotFound $exception) {
+		} catch (\Sabre\DAV\Exception\NotFound $exception) {
 			return FALSE;
 		}
 		// TODO check if other status codes may also indicate that the file is present
@@ -511,7 +512,7 @@ class WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\AbstractDriver {
 				'identifier' => $identifier,
 				'storage' => $this->storage->getUid()
 			);
-		} catch (\Sabre_DAV_Exception $exception) {
+		} catch (\Sabre\DAV\Exception $exception) {
 			$fileInfo = array(
 				'name' => basename($identifier),
 				'identifier' => $identifier,
@@ -747,7 +748,7 @@ class WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\AbstractDriver {
 
 		try {
 			$result = $this->executeMoveRequest($file->getIdentifier(), $newPath);
-		} catch (\Sabre_DAV_Exception $e) {
+		} catch (\Sabre\DAV\Exception $e) {
 			// TODO insert correct exception here
 			throw new \TYPO3\CMS\Core\Resource\Exception\FileOperationErrorException('Moving file ' . $file->getIdentifier()
 				. ' to ' . $newPath . ' failed.', 1325848030);
@@ -778,7 +779,7 @@ class WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\AbstractDriver {
 				// force overwriting the file (header Overwrite: T) because the Storage already handled possible conflicts
 				// for us
 			$result = $this->executeDavRequest('COPY', $oldFileUrl, NULL, array('Destination' => $newFileUrl, 'Overwrite' => 'T'));
-		} catch (\Sabre_DAV_Exception $e) {
+		} catch (\Sabre\DAV\Exception $e) {
 			// TODO insert correct exception here
 			throw new \TYPO3\CMS\Core\Resource\Exception\FileOperationErrorException('Copying file ' . $file->getIdentifier() . ' to '
 				. $newFileIdentifier . ' failed.', 1325848030);
@@ -804,7 +805,7 @@ class WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\AbstractDriver {
 
 		try {
 			$result = $this->executeMoveRequest($folderToMove->getIdentifier(), $newFolderIdentifier);
-		} catch (\Sabre_DAV_Exception $e) {
+		} catch (\Sabre\DAV\Exception $e) {
 			// TODO insert correct exception here
 			throw new \TYPO3\CMS\Core\Resource\Exception\FileOperationErrorException('Moving folder ' . $folderToMove->getIdentifier()
 				. ' to ' . $newFolderIdentifier . ' failed: ' . $e->getMessage(), 1326135944);
@@ -832,7 +833,7 @@ class WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\AbstractDriver {
 
 		try {
 			$result = $this->executeDavRequest('COPY', $oldFolderUrl, NULL, array('Destination' => $newFolderUrl, 'Overwrite' => 'T'));
-		} catch (\Sabre_DAV_Exception $e) {
+		} catch (\Sabre\DAV\Exception $e) {
 			// TODO insert correct exception here
 			throw new \TYPO3\CMS\Core\Resource\Exception\FileOperationErrorException('Moving folder ' . $folderToMove->getIdentifier()
 				. ' to ' . $newFolderIdentifier . ' failed.', 1326135944);
@@ -997,7 +998,7 @@ class WebDavDriver extends \TYPO3\CMS\Core\Resource\Driver\AbstractDriver {
 
 		try {
 			$result = $this->executeMoveRequest($sourcePath, $targetPath);
-		} catch (\Sabre_DAV_Exception $e) {
+		} catch (\Sabre\DAV\Exception $e) {
 			// TODO insert correct exception here
 			throw new \TYPO3\CMS\Core\Resource\Exception\FileOperationErrorException('Renaming ' . $sourcePath . ' to '
 				. $targetPath . ' failed.', 1325848030);
