@@ -31,6 +31,7 @@ include_once __DIR__ . '/../../Resources/Php/SabreDAV/vendor/autoload.php';
 
 use Sabre\DAV;
 use TYPO3\CMS\Core\Cache\CacheManager;
+use TYPO3\CMS\Core\Cache\Frontend\FrontendInterface;
 use TYPO3\CMS\Core\Resource\Driver\AbstractDriver;
 use TYPO3\CMS\Core\Resource\Exception\FileOperationErrorException;
 use TYPO3\CMS\Core\Resource\Exception\FolderDoesNotExistException;
@@ -89,10 +90,6 @@ class WebDavDriver extends AbstractDriver {
 	protected $logger;
 
 	public function __construct(array $configuration = array()) {
-		/** @var CacheManager $cacheManager */
-		$cacheManager = GeneralUtility::makeInstance('TYPO3\\CMS\\Core\\Cache\\CacheManager');
-		$this->directoryListingCache = $cacheManager->getCache('tx_falwebdav_directorylisting');
-
 		$this->logger = GeneralUtility::makeInstance('TYPO3\CMS\Core\Log\LogManager')->getLogger(__CLASS__);
 
 		parent::__construct($configuration);
@@ -116,6 +113,28 @@ class WebDavDriver extends AbstractDriver {
 	 */
 	public function injectDavClient(WebDavClient $client) {
 		$this->davClient = $client;
+	}
+
+	/**
+	 * Only used in tests.
+	 *
+	 * @param FrontendInterface $cache
+	 */
+	public function injectDirectoryListingCache(FrontendInterface $cache) {
+		$this->directoryListingCache = $cache;
+	}
+
+	/**
+	 * @return FrontendInterface
+	 */
+	protected function getCache() {
+		if (!$this->directoryListingCache) {
+			/** @var CacheManager $cacheManager */
+			$cacheManager = GeneralUtility::makeInstance('TYPO3\\CMS\\Core\\Cache\\CacheManager');
+			$this->directoryListingCache = $cacheManager->getCache('tx_falwebdav_directorylisting');
+		}
+
+		return $this->directoryListingCache;
 	}
 
 	/**
@@ -593,7 +612,7 @@ class WebDavDriver extends AbstractDriver {
 			// the costly server calls - and we might save the most time and load when having the next pages already at
 			// hand for a file browser or the like.
 		$cacheKey = $this->getCacheIdentifierForPath($path);
-		if (!$properties = $this->directoryListingCache->get($cacheKey)) {
+		if (!$properties = $this->getCache()->get($cacheKey)) {
 			$properties = $this->davPropFind($url);
 
 			// the returned items are indexed by their key, so sort them here to return the correct items.
@@ -601,7 +620,7 @@ class WebDavDriver extends AbstractDriver {
 			uksort($properties, 'strnatcasecmp');
 
 			// TODO set cache lifetime
-			$this->directoryListingCache->set($cacheKey, $properties);
+			$this->getCache()->set($cacheKey, $properties);
 		}
 
 		// if we have only one entry, this is the folder we are currently in, so there are no items -> return an empty array
@@ -665,7 +684,7 @@ class WebDavDriver extends AbstractDriver {
 	 * @return void
 	 */
 	protected function removeCacheForPath($path) {
-		$this->directoryListingCache->remove($this->getCacheIdentifierForPath($path));
+		$this->getCache()->remove($this->getCacheIdentifierForPath($path));
 	}
 
 	/**
