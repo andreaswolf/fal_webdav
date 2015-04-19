@@ -4,7 +4,7 @@ if (!defined('TYPO3_MODE')) {
 	die('Access denied.');
 }
 
-include_once \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extPath('fal_webdav') . 'Resources/Php/SabreDAV/lib/Sabre/autoload.php';
+include_once \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extPath('fal_webdav') . 'Resources/Php/SabreDAV/vendor/autoload.php';
 
 $newPath = \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extPath('fal_webdav') . 'Resources/Php/SabreDAV/lib/';
 set_include_path($newPath . PATH_SEPARATOR . get_include_path());
