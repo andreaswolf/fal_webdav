@@ -53,27 +53,16 @@ class WebDavClient extends Client {
 	/**
 	 * Wrapper for all cUrl functions.
 	 *
-	 * @param string $url
-	 * @param array $settings
+	 * @param resource $curlHandle
 	 *
 	 * @return array
 	 */
-	protected function curlRequest($url, $settings) {
-
-		$curl = curl_init($url);
-		curl_setopt_array($curl, $settings);
-
+	protected function curlExec($curlHandle) {
 		if ($this->verifyCertificates === FALSE) {
-			curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, FALSE);
+			curl_setopt($curlHandle, CURLOPT_SSL_VERIFYPEER, FALSE);
 		}
 
-		return array(
-			curl_exec($curl),
-			curl_getinfo($curl),
-			curl_errno($curl),
-			curl_error($curl)
-		);
-
+		return parent::curlExec($curlHandle);
 	}
 }
 
