@@ -7,8 +7,11 @@ Encrypted communication and user authentication for WebDAV are supported.
 
 ## Setup
 
-Just create a "File Storage" record (on the root page of your installation). Select "WebDAV" as the driver and fill in
-the required details.
+After downloading/cloning the extension, execute `composer install` in `Resources/Composer/`. This is required to get
+the necessary third-party libraries for WebDAV communication.
+
+After that, create a "File Storage" record (on the root page of your installation). Select "WebDAV" as the driver and
+fill in the required details.
 
 User authentication can either be done via the URL (`http://user:password@webdav.example.com/`) or in separate fields.
 In both cases, the URLs that are displayed publicly do not contain authentication information.
