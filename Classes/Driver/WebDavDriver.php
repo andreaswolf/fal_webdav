@@ -880,31 +880,6 @@ class WebDavDriver extends AbstractDriver {
 	}
 
 	/**
-	 * Adds a file at the specified location. This should only be used internally.
-	 *
-	 * @param string $localFilePath
-	 * @param \TYPO3\CMS\Core\Resource\Folder $targetFolder
-	 * @param string $targetFileName
-	 * @return string The new identifier of the file
-	 */
-	public function addFileRaw($localFilePath, \TYPO3\CMS\Core\Resource\Folder $targetFolder, $targetFileName) {
-		return $this->addFile($localFilePath, $targetFolder, $targetFileName)->getIdentifier();
-	}
-
-	/**
-	 * Deletes a file without access and usage checks. This should only be used internally.
-	 *
-	 * This accepts an identifier instead of an object because we might want to delete files that have no object
-	 * associated with (or we don't want to create an object for) them - e.g. when moving a file to another storage.
-	 *
-	 * @param string $identifier
-	 * @return bool TRUE if removing the file succeeded
-	 */
-	public function deleteFileRaw($identifier) {
-		return $this->deleteFile($this->getFile($identifier));
-	}
-
-	/**
 	 * Returns the root level folder of the storage.
 	 *
 	 * @return \TYPO3\CMS\Core\Resource\Folder
