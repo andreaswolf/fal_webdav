@@ -1,6 +1,8 @@
 {
   "require": {
-    "sabre/dav": "dev-master"
+    "sabre/dav": "dev-master",
+    "sabre/http": "dev-master as 4.0.0-alpha1"
   },
-  "minimum-stability": "dev"
+  "minimum-stability": "dev",
+  "preferred-install": "source"
 }

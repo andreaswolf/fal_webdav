@@ -4,7 +4,7 @@
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "8e34c86a50f9b68b0ee9d7fdcb724182",
+    "hash": "55997a5215e3b474b11dae4cb12e5233",
     "packages": [
         {
             "name": "sabre/dav",
@@ -136,16 +136,16 @@
         },
         {
             "name": "sabre/http",
-            "version": "4.0.0-alpha1",
+            "version": "dev-master",
             "source": {
                 "type": "git",
                 "url": "https://github.com/fruux/sabre-http.git",
-                "reference": "3f5dc3e6522092b7d12bd40950ebddc201065c25"
+                "reference": "19387395a378b35251d654add1d6e58263dae8bd"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/fruux/sabre-http/zipball/3f5dc3e6522092b7d12bd40950ebddc201065c25",
-                "reference": "3f5dc3e6522092b7d12bd40950ebddc201065c25",
+                "url": "https://api.github.com/repos/fruux/sabre-http/zipball/19387395a378b35251d654add1d6e58263dae8bd",
+                "reference": "19387395a378b35251d654add1d6e58263dae8bd",
                 "shasum": ""
             },
             "require": {
@@ -184,7 +184,7 @@
             "keywords": [
                 "http"
             ],
-            "time": "2015-02-25 19:05:12"
+            "time": "2015-05-11 15:48:09"
         },
         {
             "name": "sabre/uri",
@@ -359,10 +359,18 @@
         }
     ],
     "packages-dev": [],
-    "aliases": [],
+    "aliases": [
+        {
+            "alias": "4.0.0-alpha1",
+            "alias_normalized": "4.0.0.0-alpha1",
+            "version": "9999999-dev",
+            "package": "sabre/http"
+        }
+    ],
     "minimum-stability": "dev",
     "stability-flags": {
-        "sabre/dav": 20
+        "sabre/dav": 20,
+        "sabre/http": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,
