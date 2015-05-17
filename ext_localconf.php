@@ -18,5 +18,10 @@ $TYPO3_CONF_VARS['SC_OPTIONS']['t3lib/class.t3lib_tcemain.php']['processDatamapC
 
 	// Cache configuration, see http://wiki.typo3.org/Caching_Framework
 if (!is_array($TYPO3_CONF_VARS['SYS']['caching']['cacheConfigurations']['tx_falwebdav_directorylisting'])) {
-    $TYPO3_CONF_VARS['SYS']['caching']['cacheConfigurations']['tx_falwebdav_directorylisting'] = array();
+	$TYPO3_CONF_VARS['SYS']['caching']['cacheConfigurations']['tx_falwebdav_directorylisting'] = array(
+		'frontend' => 'TYPO3\CMS\Core\Cache\Frontend\VariableFrontend',
+		'backend' => 'TYPO3\CMS\Core\Cache\Backend\TransientMemoryBackend',
+		'options' => array(),
+		'groups' => array()
+    );
 }
