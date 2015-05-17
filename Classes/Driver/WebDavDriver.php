@@ -27,7 +27,7 @@ namespace TYPO3\FalWebdav\Driver;
  *  This copyright notice MUST APPEAR in all copies of the script!
  ***************************************************************/
 
-include_once __DIR__ . '/../../Resources/Php/SabreDAV/vendor/autoload.php';
+include_once __DIR__ . '/../../Resources/Composer/vendor/autoload.php';
 
 use Sabre\DAV;
 use TYPO3\CMS\Core\Cache\CacheManager;
