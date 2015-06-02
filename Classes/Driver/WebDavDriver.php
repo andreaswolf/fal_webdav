@@ -557,47 +557,6 @@ class WebDavDriver extends AbstractDriver {
 	}
 
 	/**
-	 * Returns a list of files inside the specified path
-	 *
-	 * @param string $path
-	 * @param integer $start The position to start the listing; if not set, start from the beginning
-	 * @param integer $numberOfItems The number of items to list; if not set, return all items
-	 * @param array $filenameFilterCallbacks Callback methods used for filtering the file list.
-	 * @param array $fileData Two-dimensional, identifier-indexed array of file index records from the database
-	 * @return array
-	 */
-	// TODO add unit tests
-	public function getFileList($path, $start = 0, $numberOfItems = 0, array $filenameFilterCallbacks = array(), $fileData = array()) {
-		return $this->getDirectoryItemList($path, $start, $numberOfItems, $filenameFilterCallbacks, 'getFileList_itemCallback');
-	}
-
-	/**
-	 * Returns a list of all folders in a given path
-	 *
-	 * @param string $path
-	 * @param integer $start The position to start the listing; if not set, start from the beginning
-	 * @param integer $numberOfItems The number of items to list; if not set, return all items
-	 * @param array $foldernameFilterCallbacks Callback methods used for filtering the file list.
-	 * @return array
-	 */
-	public function getFolderList($path, $start = 0, $numberOfItems = 0, array $foldernameFilterCallbacks = array()) {
-		return $this->getDirectoryItemList($path, $start, $numberOfItems, $foldernameFilterCallbacks, 'getFolderList_itemCallback');
-	}
-
-	/**
-	 * Returns a folder within the given folder. Use this method instead of doing your own string manipulation magic
-	 * on the identifiers because non-hierarchical storages might fail otherwise.
-	 *
-	 * @param $name
-	 * @param \TYPO3\CMS\Core\Resource\Folder $parentFolder
-	 * @return \TYPO3\CMS\Core\Resource\Folder
-	 */
-	public function getFolderInFolder($name, \TYPO3\CMS\Core\Resource\Folder $parentFolder) {
-		$folderIdentifier = $parentFolder->getIdentifier() . $name . '/';
-		return $folderIdentifier;
-	}
-
-	/**
 	 * Generic handler method for directory listings - gluing together the listing items is done
 	 *
 	 * @param string $path
