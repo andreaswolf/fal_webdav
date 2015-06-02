@@ -218,6 +218,7 @@ class WebDavDriver extends AbstractDriver {
 	 * @param string $body
 	 * @param array $headers
 	 * @return array
+	 * @throws \Exception If anything goes wrong
 	 */
 	protected function executeDavRequest($method, $url, $body = NULL, array $headers = array()) {
 		try {
@@ -231,7 +232,7 @@ class WebDavDriver extends AbstractDriver {
 				'Error while executing DAV request. Original message: "%s" (Exception %s, id: %u)',
 				$exception->getMessage(), get_class($exception), $exception->getCode()
 			));
-			$this->storage->markAsTemporaryOffline();
+			// TODO check how we can let this propagate to the driver
 			return array();
 		}
 	}
@@ -243,6 +244,7 @@ class WebDavDriver extends AbstractDriver {
 	 *
 	 * @param string $url
 	 * @return array
+	 * @throws \Exception If anything goes wrong
 	 */
 	protected function davPropFind($url) {
 		try {
@@ -261,7 +263,7 @@ class WebDavDriver extends AbstractDriver {
 				'Error while executing DAV PROPFIND request. Original message: "%s" (Exception %s, id: %u)',
 				$exception->getMessage(), get_class($exception), $exception->getCode()
 			));
-			$this->storage->markAsTemporaryOffline();
+			// TODO check how we can let this propagate to the driver
 			return array();
 		}
 	}
@@ -340,7 +342,7 @@ class WebDavDriver extends AbstractDriver {
 	}
 
 	/**
-	 * Creates a new file and returns the matching file object for it.
+	 * Creates a new file and returns its identifier.
 	 *
 	 * @param string $fileName
 	 * @param string $parentFolderIdentifier
