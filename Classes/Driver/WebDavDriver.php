@@ -327,11 +327,16 @@ class WebDavDriver extends AbstractDriver {
 
 		switch ($hashAlgorithm) {
 			case 'sha1':
-				return sha1_file($fileCopy);
+				$hash = sha1_file($fileCopy);
 				break;
+
+			default:
+				throw new \InvalidArgumentException('Unsupported hash algorithm ' . $hashAlgorithm);
 		}
 
 		unlink($fileCopy);
+
+		return $hash;
 	}
 
 	/**
