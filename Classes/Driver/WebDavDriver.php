@@ -25,6 +25,7 @@ use TYPO3\CMS\Core\Resource\Exception\FolderDoesNotExistException;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\HttpUtility;
+use TYPO3\FalWebdav\Dav\WebDavFrontend;
 use TYPO3\FalWebdav\Dav\WebDavClient;
 use TYPO3\FalWebdav\Utility\EncryptionUtility;
 
@@ -82,6 +83,11 @@ class WebDavDriver extends AbstractDriver {
 	protected $directoryListingCache;
 
 	/**
+	 * @var WebDavFrontend
+	 */
+	protected $frontend;
+
+	/**
 	 * @var \TYPO3\CMS\Core\Log\Logger
 	 */
 	protected $logger;
@@ -119,6 +125,17 @@ class WebDavDriver extends AbstractDriver {
 	 */
 	public function injectDirectoryListingCache(FrontendInterface $cache) {
 		$this->directoryListingCache = $cache;
+	}
+
+	public function injectFrontend(WebDavFrontend $frontend) {
+		$this->frontend = $frontend;
+	}
+
+	protected function getFrontend() {
+		if (!$this->frontend) {
+			$this->frontend = new WebDavFrontend($this->davClient, $this->baseUrl, $this->storageUid);
+		}
+		return $this->frontend;
 	}
 
 	/**
@@ -211,6 +228,13 @@ class WebDavDriver extends AbstractDriver {
 		return $this->executeDavRequest('MOVE', $oldUrl, NULL, array('Destination' => $newUrl, 'Overwrite' => 'T'));
 	}
 
+	protected function encodeUrl($url) {
+		$urlParts = parse_url($url);
+		$urlParts['path'] = implode('/', array_map('rawurlencode', explode('/', $urlParts['path'])));
+
+		return HttpUtility::buildUrl($urlParts);
+	}
+
 	/**
 	 * Executes a request on the DAV driver.
 	 *
@@ -223,6 +247,7 @@ class WebDavDriver extends AbstractDriver {
 	 */
 	protected function executeDavRequest($method, $url, $body = NULL, array $headers = array()) {
 		try {
+			$url = $this->encodeUrl($url);
 			return $this->davClient->request($method, $url, $body, $headers);
 		} catch (\Sabre\DAV\Exception\NotFound $exception) {
 			// If a file is not found, we have to deal with that on a higher level, so throw the exception again
@@ -239,30 +264,6 @@ class WebDavDriver extends AbstractDriver {
 	}
 
 
-
-	/**
-	 * Executes a PROPFIND request on the given URL and returns the result array
-	 *
-	 * @param string $url
-	 * @return array
-	 * @throws \Exception If anything goes wrong
-	 */
-	protected function davPropFind($url) {
-		try {
-			return $this->davClient->propFind($url, NULL, 1);
-		} catch (\Sabre\DAV\Exception\NotFound $exception) {
-			// If a file is not found, we have to deal with that on a higher level, so throw the exception again
-			throw $exception;
-		} catch (DAV\Exception $exception) {
-			// log all other exceptions
-			$this->logger->error(sprintf(
-				'Error while executing DAV PROPFIND request. Original message: "%s" (Exception %s, id: %u)',
-				$exception->getMessage(), get_class($exception), $exception->getCode()
-			));
-			// TODO check how we can let this propagate to the driver
-			return array();
-		}
-	}
 
 	/**
 	 * Checks if a given resource exists in this DAV share.
@@ -500,109 +501,10 @@ class WebDavDriver extends AbstractDriver {
 	 * @return array
 	 */
 	public function getFileInfoByIdentifier($identifier, array $propertiesToExtract = array()) {
+		assert($identifier[0] === '/', 'Identifier must start with a slash, got ' . $identifier);
 		$fileUrl = $this->baseUrl . ltrim($identifier, '/');
 
-		try {
-			$properties = $this->executeDavRequest('PROPFIND', $fileUrl);
-			$properties = $this->davClient->parseMultiStatus($properties['body']);
-			$properties = $properties[$this->basePath . ltrim($identifier, '/')][200];
-
-			// TODO make this more robust (check if properties are available etc.)
-			$fileInfo = array(
-				'mtime' => strtotime($properties['{DAV:}getlastmodified']),
-				'ctime' => strtotime($properties['{DAV:}creationdate']),
-				'mimetype' => $properties['{DAV:}getcontenttype'],
-				'name' => basename($identifier),
-				'size' => $properties['{DAV:}getcontentlength'],
-				'identifier' => $identifier,
-				'storage' => $this->storageUid
-			);
-		} catch (DAV\Exception $exception) {
-			$fileInfo = array(
-				'name' => basename($identifier),
-				'identifier' => $identifier,
-				'storage' => $this->storageUid
-			);
-		}
-
-		return $fileInfo;
-	}
-
-	/**
-	 * Generic handler method for directory listings - gluing together the listing items is done
-	 *
-	 * @param string $path
-	 * @param integer $start
-	 * @param integer $numberOfItems
-	 * @param array $filterMethods
-	 * @param callable $itemHandlerMethod
-	 * @return array
-	 */
-	// TODO implement pre-loaded array rows
-	protected function getDirectoryItemList($path, $start, $numberOfItems, $filterMethods, $itemHandlerMethod) {
-		$path = ltrim($path, '/');
-		$url = $this->baseUrl . $path;
-			// the full (web) path to the current folder on the web server
-		$basePath = $this->basePath . ltrim($path, '/');
-
-			// Try to fetch the raw server response for the given path from our cache. We cache the raw response -
-			// although it might be a bit larger than the processed result - because we mainly do the caching to avoid
-			// the costly server calls - and we might save the most time and load when having the next pages already at
-			// hand for a file browser or the like.
-		$cacheKey = $this->getCacheIdentifierForPath($path);
-		if (!$properties = $this->getCache()->get($cacheKey)) {
-			$properties = $this->davPropFind($url);
-
-			// the returned items are indexed by their key, so sort them here to return the correct items.
-			// At least Apache does not sort them before returning
-			uksort($properties, 'strnatcasecmp');
-
-			// TODO set cache lifetime
-			$this->getCache()->set($cacheKey, $properties);
-		}
-
-		// if we have only one entry, this is the folder we are currently in, so there are no items -> return an empty array
-		if (count($properties) == 1) {
-			return array();
-		}
-
-		$propertyIterator = new \ArrayIterator($properties);
-
-		// TODO handle errors
-
-		if ($path !== '' && $path != '/') {
-			$path = '/' . trim($path, '/') . '/';
-		}
-
-		$c = $numberOfItems > 0 ? $numberOfItems : $propertyIterator->count();
-		$propertyIterator->seek($start);
-
-		$items = array();
-		while ($propertyIterator->valid() && $c > 0) {
-			$item = $propertyIterator->current();
-			// the full (web) path to the current item on the server
-			$filePath = $propertyIterator->key();
-			$itemName = substr($filePath, strlen($basePath));
-			$propertyIterator->next();
-
-			/* TODO check if we still need this, reimplement in case
-			if ($this->applyFilterMethodsToDirectoryItem($filterMethods, $itemName, $filePath, $basePath, array('item' => $item)) === FALSE) {
-				continue;
-			}*/
-
-			list($key, $entry) = $this->$itemHandlerMethod($item, $filePath, $basePath, $path);
-
-			if (empty($entry)) {
-				continue;
-			}
-
-			// paths need to include the leading slash, otherwise fetching a directory list might end in a endless loop
-			$items[$key] = '/' . $entry;
-
-			--$c;
-		}
-
-		return $items;
+		return $this->getFrontend()->getFileInfo($identifier);
 	}
 
 	/**
@@ -620,54 +522,10 @@ class WebDavDriver extends AbstractDriver {
 	 *
 	 * @param $path
 	 * @return void
+	 * @deprecated this should be moved to WebDavFrontend
 	 */
 	protected function removeCacheForPath($path) {
 		$this->getCache()->remove($this->getCacheIdentifierForPath($path));
-	}
-
-	/**
-	 * Callback method that extracts file information from a single entry inside a DAV PROPFIND response. Called by getDirectoryItemList.
-	 *
-	 * @param array $item The information about the item as fetched from the server
-	 * @param string $filePath The full path to the item
-	 * @param string $basePath The path of the queried folder
-	 * @param string $path The queried path (inside the WebDAV storage)
-	 * @return array
-	 */
-	protected function getFileList_itemCallback(array $item, $filePath, $basePath, $path) {
-		if ($item['{DAV:}resourcetype']->is('{DAV:}collection')) {
-			return array('', '');
-		}
-		$fileName = substr($filePath, strlen($basePath));
-
-			// check if the zero bytes should not be indexed
-		if ($this->configuration['enableZeroByteFilesIndexing'] === FALSE && $item['{DAV:}getcontentlength'] == 0) {
-			return array('', '');
-		}
-
-		return array($fileName, $path . $fileName);
-	}
-
-	/**
-	 * Callback method that extracts folder information from a single entry inside a DAV PROPFIND response. Called by getDirectoryItemList.
-	 *
-	 * @param array $item The information about the item as fetched from the server
-	 * @param string $filePath The full path to the item
-	 * @param string $basePath The path of the queried folder
-	 * @param string $path The queried path (inside the WebDAV storage)
-	 * @return array
-	 */
-	protected function getFolderList_itemCallback(array $item, $filePath, $basePath, $path) {
-		if (!$item['{DAV:}resourcetype']->is('{DAV:}collection')) {
-			return array('', '');
-		}
-		$folderName = trim(substr($filePath, strlen($basePath)), '/');
-
-		if ($folderName == '') {
-			return array('', '');
-		}
-
-		return array($folderName, $path . trim($folderName, '/') . '/');
 	}
 
 	/**
@@ -947,7 +805,7 @@ class WebDavDriver extends AbstractDriver {
 	public function isFolderEmpty($folderIdentifier) {
 		$folderUrl = $this->getResourceUrl($folderIdentifier);
 
-		$folderContents = $this->davPropFind($folderUrl);
+		$folderContents = $this->frontend->propFind($folderUrl);
 
 		return (count($folderContents) == 1);
 	}
@@ -1066,7 +924,14 @@ class WebDavDriver extends AbstractDriver {
 	 */
 	public function getFilesInFolder($folderIdentifier, $start = 0, $numberOfItems = 0, $recursive = FALSE,
 	                                 array $filenameFilterCallbacks = array()) {
-		return $this->getDirectoryItemList($folderIdentifier, $start, $numberOfItems, $filenameFilterCallbacks, 'getFileList_itemCallback');
+		$files = $this->getFrontend()->listFiles($folderIdentifier);
+
+		$items = array();
+		foreach ($files as $filename) {
+			$items[$filename] = $folderIdentifier . $filename;
+		}
+
+		return $items;
 	}
 
 	/**
@@ -1082,6 +947,13 @@ class WebDavDriver extends AbstractDriver {
 	 */
 	public function getFoldersInFolder($folderIdentifier, $start = 0, $numberOfItems = 0, $recursive = FALSE,
 	                                   array $folderNameFilterCallbacks = array()) {
-		return $this->getDirectoryItemList($folderIdentifier, $start, $numberOfItems, $folderNameFilterCallbacks, 'getFolderList_itemCallback');
+		$folders = $this->getFrontend()->listFolders($folderIdentifier);
+
+		$items = array();
+		foreach ($folders as $name) {
+			$items[$name] = $folderIdentifier . $name . '/';
+		}
+
+		return $items;
 	}
 }
