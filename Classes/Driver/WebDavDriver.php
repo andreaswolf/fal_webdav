@@ -235,12 +235,7 @@ class WebDavDriver extends AbstractDriver {
 	 */
 	protected function davPropFind($url) {
 		try {
-			return $this->davClient->propfind($url, array(
-				'{DAV:}resourcetype',
-				'{DAV:}creationdate',
-				'{DAV:}getcontentlength',
-				'{DAV:}getlastmodified'
-			), 1);
+			return $this->davClient->propFind($url, NULL, 1);
 		} catch (\Sabre\DAV\Exception\NotFound $exception) {
 			// If a file is not found, we have to deal with that on a higher level, so throw the exception again
 			throw $exception;
