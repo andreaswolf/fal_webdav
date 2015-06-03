@@ -24,7 +24,9 @@ use TYPO3\CMS\Core\Resource\Exception\FileOperationErrorException;
 use TYPO3\CMS\Core\Resource\Exception\FolderDoesNotExistException;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Core\Utility\HttpUtility;
 use TYPO3\FalWebdav\Dav\WebDavClient;
+use TYPO3\FalWebdav\Utility\EncryptionUtility;
 
 
 /**
@@ -38,6 +40,14 @@ class WebDavDriver extends AbstractDriver {
 	 * @var string
 	 */
 	protected $baseUrl = '';
+
+	/**
+	 * The base URL to fetch resources. Includes authentication information if authentication is enabled, so this must
+	 * never be published!
+	 *
+	 * @var string
+	 */
+	protected $resourceBaseUrl = '';
 
 	/**
 	 * The base path of the WebDAV store. This is the URL without protocol, host and port (i.e., only the path on the host).
@@ -150,17 +160,21 @@ class WebDavDriver extends AbstractDriver {
 		$settings = array();
 		if ($this->configuration['useAuthentication']) {
 			$this->username = $urlInfo['user'] ? $urlInfo['user'] : $this->configuration['username'];
-			$this->password = $urlInfo['pass'] ? $urlInfo['pass'] : \TYPO3\FalWebdav\Utility\EncryptionUtility::decryptPassword($this->configuration['password']);
+			$this->password = $urlInfo['pass'] ? $urlInfo['pass'] : EncryptionUtility::decryptPassword($this->configuration['password']);
 			$settings = array(
 				'userName' => $this->username,
 				'password' => $this->password
 			);
 		}
 
+		// make sure the URL contains authentication data and build the resource URL for directly fetching data
+		$urlInfo['user'] = $this->username;
+		$urlInfo['pass'] = $this->password;
+		$this->resourceBaseUrl = rtrim(HttpUtility::buildUrl($urlInfo), '/') . '/';
 		// create cleaned URL without credentials
 		unset($urlInfo['user']);
 		unset($urlInfo['pass']);
-		$this->baseUrl = rtrim(\TYPO3\CMS\Core\Utility\HttpUtility::buildUrl($urlInfo), '/') . '/';
+		$this->baseUrl = rtrim(HttpUtility::buildUrl($urlInfo), '/') . '/';
 		$settings['baseUri'] = $this->baseUrl;
 
 		$this->davClient = new WebDavClient($settings);
@@ -275,15 +289,11 @@ class WebDavDriver extends AbstractDriver {
 	/**
 	 * Returns the complete URL to a file. This is not necessarily the publicly available URL!
 	 *
-	 * @param string|\TYPO3\CMS\Core\Resource\FileInterface|\TYPO3\CMS\Core\Resource\Folder $file The file object or its identifier
+	 * @param string $file The file object or its identifier
 	 * @return string
 	 */
 	protected function getResourceUrl($file) {
-		if (is_object($file)) {
-			return $this->baseUrl . ltrim($file->getIdentifier(), '/');
-		} else {
-			return $this->baseUrl . ltrim($file, '/');
-		}
+		return $this->resourceBaseUrl . ltrim($file, '/');
 	}
 
 	/**
