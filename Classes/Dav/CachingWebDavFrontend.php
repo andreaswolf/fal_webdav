@@ -126,7 +126,7 @@ class CachingWebDavFrontend extends WebDavFrontend {
 	 * @return string
 	 */
 	protected function getCacheIdentifierForResponse($path) {
-		return 'davResponse-' . sha1($path);
+		return 'davResponse-' . $this->storageUid . '-' . sha1($path);
 	}
 
 	/**
@@ -136,7 +136,7 @@ class CachingWebDavFrontend extends WebDavFrontend {
 	 * @return string
 	 */
 	protected function getCacheIdentifierForFileList($path) {
-		return 'filelist-' . sha1($this->baseUrl . ':' . trim($path, '/') . '/');
+		return 'filelist-' . $this->storageUid . '-' . sha1($this->baseUrl . ':' . trim($path, '/') . '/');
 	}
 
 	/**
@@ -146,7 +146,7 @@ class CachingWebDavFrontend extends WebDavFrontend {
 	 * @return string
 	 */
 	protected function getCacheIdentifierForFolderList($path) {
-		return 'folderlist-' . sha1($this->baseUrl . ':' . trim($path, '/') . '/');
+		return 'folderlist-' . $this->storageUid . '-' . sha1($this->baseUrl . ':' . trim($path, '/') . '/');
 	}
 
 	/**
@@ -156,7 +156,7 @@ class CachingWebDavFrontend extends WebDavFrontend {
 	 * @return string
 	 */
 	protected function getCacheIdentifierForFileInfo($path) {
-		return 'fileinfo-' . sha1($this->baseUrl . ':' . $path);
+		return 'fileinfo-' . $this->storageUid . '-' . sha1($this->baseUrl . ':' . $path);
 	}
 
 	function __destruct() {
