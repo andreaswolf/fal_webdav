@@ -918,12 +918,20 @@ class WebDavDriver extends AbstractDriver {
 	 * @param integer $numberOfItems
 	 * @param boolean $recursive
 	 * @param array $filenameFilterCallbacks callbacks for filtering the items
+	 * @param string $sort Property name used to sort the items.
+	 *                     Among them may be: '' (empty, no sorting), name,
+	 *                     fileext, size, tstamp and rw.
+	 *                     If a driver does not support the given property, it
+	 *                     should fall back to "name".
+	 * @param bool $sortRev TRUE to indicate reverse sorting (last to first)
 	 *
 	 * @return array of FileIdentifiers
 	 */
 	public function getFilesInFolder($folderIdentifier, $start = 0, $numberOfItems = 0, $recursive = FALSE,
-	                                 array $filenameFilterCallbacks = array()) {
+	                                 array $filenameFilterCallbacks = array(), $sort = '', $sortRev = FALSE) {
 		$files = $this->getFrontend()->listFiles($folderIdentifier);
+
+		// TODO implement sorting
 
 		$items = array();
 		foreach ($files as $filename) {
@@ -934,6 +942,19 @@ class WebDavDriver extends AbstractDriver {
 	}
 
 	/**
+	 * Returns the number of files inside the specified path
+	 *
+	 * @param string $folderIdentifier
+	 * @param boolean $recursive
+	 * @param array $filenameFilterCallbacks callbacks for filtering the items
+	 * @return integer Number of files in folder
+	 */
+	public function countFilesInFolder($folderIdentifier, $recursive = FALSE,
+	                                   array $filenameFilterCallbacks = array()) {
+		return count($this->getFrontend()->listFiles($folderIdentifier));
+	}
+
+	/**
 	 * Returns a list of folders inside the specified path
 	 *
 	 * @param string $folderIdentifier
@@ -941,12 +962,20 @@ class WebDavDriver extends AbstractDriver {
 	 * @param integer $numberOfItems
 	 * @param boolean $recursive
 	 * @param array $folderNameFilterCallbacks callbacks for filtering the items
+	 * @param string $sort Property name used to sort the items.
+	 *                     Among them may be: '' (empty, no sorting), name,
+	 *                     fileext, size, tstamp and rw.
+	 *                     If a driver does not support the given property, it
+	 *                     should fall back to "name".
+	 * @param bool $sortRev TRUE to indicate reverse sorting (last to first)
 	 *
-	 * @return array of Folder Identifier
+	 * @return array of folder identifiers
 	 */
 	public function getFoldersInFolder($folderIdentifier, $start = 0, $numberOfItems = 0, $recursive = FALSE,
-	                                   array $folderNameFilterCallbacks = array()) {
+	                                   array $folderNameFilterCallbacks = array(), $sort = '', $sortRev = FALSE) {
 		$folders = $this->getFrontend()->listFolders($folderIdentifier);
+
+		// TODO implement sorting
 
 		$items = array();
 		foreach ($folders as $name) {
@@ -955,4 +984,18 @@ class WebDavDriver extends AbstractDriver {
 
 		return $items;
 	}
+
+	/**
+	 * Returns the number of folders inside the specified path
+	 *
+	 * @param string $folderIdentifier
+	 * @param boolean $recursive
+	 * @param array $folderNameFilterCallbacks callbacks for filtering the items
+	 * @return integer Number of folders in folder
+	 */
+	public function countFoldersInFolder($folderIdentifier, $recursive = FALSE,
+	                                     array $folderNameFilterCallbacks = array()) {
+		return count($this->getFrontend()->listFolders($folderIdentifier));
+	}
+
 }
