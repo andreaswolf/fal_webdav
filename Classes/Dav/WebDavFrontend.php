@@ -79,14 +79,14 @@ class WebDavFrontend {
 	/**
 	 * Wrapper around the PROPFIND method of the WebDAV client to get proper local error handling.
 	 *
-	 * @param string $url
+	 * @param string $path
 	 * @return array
 	 * @throws DAV\Exception\NotFound if the given URL does not hold a resource
 	 *
 	 * TODO define proper error handling for other cases
 	 */
-	public function propFind($url) {
-		// TODO check cache
+	public function propFind($path) {
+		$url = $this->baseUrl . $path;
 		$encodedUrl = $this->encodeUrl($url);
 
 		try {
@@ -149,11 +149,10 @@ class WebDavFrontend {
 		if (strlen($path) > 0) {
 			$path .= '/';
 		}
-		$url = $this->baseUrl . $path;
-		$urlParts = parse_url($url);
+		$urlParts = parse_url($this->baseUrl . $path);
 		$unencodedBasePath = $urlParts['path'];
 
-		$result = $this->propFind($url);
+		$result = $this->propFind($path);
 
 		// remove first entry, as it is the folder itself
 		array_shift($result);
@@ -187,9 +186,8 @@ class WebDavFrontend {
 	public function getFileInfo($path) {
 		// the leading slash is already included in baseURL/basePath
 		$path = ltrim($path, '/');
-		$url = $this->baseUrl . $path;
 
-		$result = $this->propFind($url);
+		$result = $this->propFind($path);
 
 		return $this->extractFileInfo($path, $result[$this->basePath . $this->urlEncodePath($path)]);
 	}

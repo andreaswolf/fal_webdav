@@ -803,9 +803,7 @@ class WebDavDriver extends AbstractDriver {
 	 * @return bool TRUE if there are no files and folders within $folder
 	 */
 	public function isFolderEmpty($folderIdentifier) {
-		$folderUrl = $this->getResourceUrl($folderIdentifier);
-
-		$folderContents = $this->frontend->propFind($folderUrl);
+		$folderContents = $this->frontend->propFind($folderIdentifier);
 
 		return (count($folderContents) == 1);
 	}
