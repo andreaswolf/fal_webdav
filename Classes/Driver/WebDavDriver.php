@@ -25,6 +25,7 @@ use TYPO3\CMS\Core\Resource\Exception\FolderDoesNotExistException;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\HttpUtility;
+use TYPO3\FalWebdav\Dav\CachingWebDavFrontend;
 use TYPO3\FalWebdav\Dav\WebDavFrontend;
 use TYPO3\FalWebdav\Dav\WebDavClient;
 use TYPO3\FalWebdav\Utility\EncryptionUtility;
@@ -133,7 +134,7 @@ class WebDavDriver extends AbstractDriver {
 
 	protected function getFrontend() {
 		if (!$this->frontend) {
-			$this->frontend = new WebDavFrontend($this->davClient, $this->baseUrl, $this->storageUid);
+			$this->frontend = new CachingWebDavFrontend($this->davClient, $this->baseUrl, $this->storageUid, $this->getCache());
 		}
 		return $this->frontend;
 	}

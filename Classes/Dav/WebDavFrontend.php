@@ -97,8 +97,6 @@ class WebDavFrontend {
 			// At least Apache does not sort them before returning
 			uksort($propfindResultArray, 'strnatcasecmp');
 
-			// TODO store result in cache
-
 			return $propfindResultArray;
 		} catch (DAV\Exception\NotFound $exception) {
 			$this->logger->warning('URL not found: ' . $url);
@@ -121,18 +119,12 @@ class WebDavFrontend {
 	 * @return array A list of file names in the path
 	 */
 	public function listFiles($path) {
-		$this->logger->debug("cache identifier: " . $this->getCacheIdentifierForResponse($path));
-
-		// TODO check cache
-
 		$files = $this->listItems($path, function ($currentItem) {
 			if (substr($currentItem, -1) == '/') {
 				return FALSE;
 			}
 			return TRUE;
 		});
-
-		// TODO store result in cache
 
 		return $files;
 	}
@@ -142,7 +134,6 @@ class WebDavFrontend {
 	 * @return array A list of folder names in the path
 	 */
 	public function listFolders($path) {
-		// TODO caching
 		$folders = $this->listItems($path, function ($currentItem) {
 			if (substr($currentItem, -1) != '/') {
 				return FALSE;
@@ -204,7 +195,6 @@ class WebDavFrontend {
 	}
 
 	protected function extractFileInfo($path, $propFindArray) {
-$this->logger->debug("File info for $path: " . json_encode($propFindArray));
 		$fileInfo = array(
 			'mtime' => (int)strtotime($propFindArray['{DAV:}getlastmodified']),
 			'ctime' => (int)strtotime($propFindArray['{DAV:}creationdate']),
@@ -216,36 +206,6 @@ $this->logger->debug("File info for $path: " . json_encode($propFindArray));
 		);
 
 		return $fileInfo;
-	}
-
-	/**
-	 * Returns the cache identifier for the raw response for a given path
-	 *
-	 * @param string $path
-	 * @return string
-	 */
-	protected function getCacheIdentifierForResponse($path) {
-		return 'davResponse-' . sha1($this->baseUrl . ':' . trim($path, '/') . '/');
-	}
-
-	/**
-	 * Returns the cache identifier for the file list of a given path.
-	 *
-	 * @param string $path
-	 * @return string
-	 */
-	protected function getCacheIdentifierForFileList($path) {
-		return 'filelist-' . sha1($this->baseUrl . ':' . trim($path, '/') . '/');
-	}
-
-	/**
-	 * Returns the cache identifier for the file list of a given path.
-	 *
-	 * @param string $path
-	 * @return string
-	 */
-	protected function getCacheIdentifierForFileInfo($path) {
-		return 'fileinfo-' . sha1($this->baseUrl . ':' . trim($path, '/') . '/');
 	}
 
 	/**
