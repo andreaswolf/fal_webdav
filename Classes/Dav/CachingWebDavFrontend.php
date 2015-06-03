@@ -52,9 +52,17 @@ class CachingWebDavFrontend extends WebDavFrontend {
 
 		if (!$this->getCache()->has($cacheKey)) {
 			++$this->cacheMisses[__FUNCTION__];
-			// TODO also extract information on all files/folders
-			$this->getCache()->set($cacheKey, parent::propFind($path));
+			$this->logger->debug('propFind(): cache miss for ' . $path);
+
+			$propFindResult = parent::propFind($path);
+
+			$this->getCache()->set($cacheKey, $propFindResult);
+
+			if (substr($path, -1) == '/' || strlen($path) == 0) {
+				$this->extractFileInformationFromPropfindResult($propFindResult);
+			}
 		} else {
+			$this->logger->debug('propFind(): cache hit for ' . $path);
 			++$this->cacheHits[__FUNCTION__];
 		}
 
@@ -86,6 +94,9 @@ class CachingWebDavFrontend extends WebDavFrontend {
 	}
 
 	public function getFileInfo($path) {
+		// the leading slash is already included in baseURL/basePath
+		$path = ltrim($path, '/');
+
 		$cacheKey = $this->getCacheIdentifierForFileInfo($path);
 		if (!$this->getCache()->has($cacheKey)) {
 			++$this->cacheMisses[__FUNCTION__];
@@ -111,11 +122,11 @@ class CachingWebDavFrontend extends WebDavFrontend {
 	/**
 	 * Returns the cache identifier for the raw response for a given path
 	 *
-	 * @param string $url
+	 * @param string $path
 	 * @return string
 	 */
-	protected function getCacheIdentifierForResponse($url) {
-		return 'davResponse-' . sha1($url);
+	protected function getCacheIdentifierForResponse($path) {
+		return 'davResponse-' . sha1($path);
 	}
 
 	/**
@@ -145,11 +156,30 @@ class CachingWebDavFrontend extends WebDavFrontend {
 	 * @return string
 	 */
 	protected function getCacheIdentifierForFileInfo($path) {
-		return 'fileinfo-' . sha1($this->baseUrl . ':' . trim($path, '/') . '/');
+		return 'fileinfo-' . sha1($this->baseUrl . ':' . $path);
 	}
 
 	function __destruct() {
 		$this->logCacheStatistics();
+	}
+
+	/**
+	 * @param $propFindResult
+	 */
+	protected function extractFileInformationFromPropfindResult($propFindResult) {
+		$this->logger->debug('Extracting file information from request');
+		foreach ($propFindResult as $filePath => $entry) {
+			if (substr($filePath, -1) == '/') {
+				continue;
+			}
+
+			$filePath = rawurldecode($filePath);
+			$filePath = substr($filePath, strlen($this->basePath));
+			$cacheKey = $this->getCacheIdentifierForFileInfo($filePath);
+			if (!$this->getCache()->has($cacheKey)) {
+				$this->getCache()->set($cacheKey, $this->extractFileInfo($filePath, $entry));
+			}
+		}
 	}
 
 }

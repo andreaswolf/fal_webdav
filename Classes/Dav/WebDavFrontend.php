@@ -23,7 +23,8 @@ use TYPO3\FalWebdav\Utility\UrlTools;
 /**
  * Utility class for doing DAV requests to the server and decoding the results into a form usable by the driver
  *
- *
+ * All identifiers within this class are relative to the DAV storage’s base path and thus have no slash at the
+ * beginning (unlike FAL identifiers, which are always prepended with a slash).
  */
 class WebDavFrontend {
 
