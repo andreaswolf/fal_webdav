@@ -460,26 +460,6 @@ class WebDavDriver extends AbstractDriver {
 	}
 
 	/**
-	 * Returns the permissions of a file as an array (keys r, w) of boolean flags
-	 *
-	 * @param \TYPO3\CMS\Core\Resource\FileInterface $file
-	 * @return array
-	 */
-	public function getFilePermissions(\TYPO3\CMS\Core\Resource\FileInterface $file) {
-		return array('r' => TRUE, 'w' => TRUE);
-	}
-
-	/**
-	 * Returns the permissions of a folder as an array (keys r, w) of boolean flags
-	 *
-	 * @param \TYPO3\CMS\Core\Resource\Folder $folder
-	 * @return array
-	 */
-	public function getFolderPermissions(\TYPO3\CMS\Core\Resource\Folder $folder) {
-		return array('r' => TRUE, 'w' => TRUE);
-	}
-
-	/**
 	 * Renames a file
 	 *
 	 * @param \TYPO3\CMS\Core\Resource\FileInterface $file
