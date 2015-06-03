@@ -502,7 +502,6 @@ class WebDavDriver extends AbstractDriver {
 	 */
 	public function getFileInfoByIdentifier($identifier, array $propertiesToExtract = array()) {
 		assert($identifier[0] === '/', 'Identifier must start with a slash, got ' . $identifier);
-		$fileUrl = $this->baseUrl . ltrim($identifier, '/');
 
 		return $this->getFrontend()->getFileInfo($identifier);
 	}

@@ -194,6 +194,8 @@ class WebDavFrontend {
 	 * @return array
 	 */
 	public function getFileInfo($path) {
+		// the leading slash is already included in baseURL/basePath
+		$path = ltrim($path, '/');
 		$url = $this->baseUrl . $path;
 
 		$result = $this->propFind($url);
