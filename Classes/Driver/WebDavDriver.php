@@ -898,7 +898,7 @@ class WebDavDriver extends AbstractDriver {
 	public function getFolderInfoByIdentifier($folderIdentifier) {
 		if (!$this->folderExists($folderIdentifier)) {
 			throw new FolderDoesNotExistException(
-				'File ' . $folderIdentifier . ' does not exist.',
+				'Folder ' . $folderIdentifier . ' does not exist.',
 				1314516810
 			);
 		}
