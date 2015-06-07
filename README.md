@@ -24,6 +24,16 @@ links will point directly to it, requiring site visitors to enter the password.
 In this case, you should also configure a different folder for the processed files, see setting "Folder for manipulated 
 and temporary images etc.".
 
+## Developer information
+
+### Creating a ZIP file of the extension (for installation in EM)
+
+Execute the following command in the folder:
+
+    zip -9 -r ../fal_webdav_<version>.zip . -x Resources/Php/* -x .git/* -x */.git/*
+
+Replace `<version>` with the version, e.g. `1.0.0`. Suffixes like `beta`, `alpha`, `dev` can be appended using a slash, 
+e.g. `0.2.0-dev` or `1.0.0-beta1`.
 
 ## Contact
 
