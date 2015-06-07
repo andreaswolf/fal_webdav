@@ -109,13 +109,15 @@ class CachingWebDavFrontend extends WebDavFrontend {
 	}
 
 	public function logCacheStatistics() {
-		print_r(sprintf('WebDAV frontend cache stats (hits/misses): '
+		if ($GLOBALS['TYPO3_AJAX'] === TRUE) {
+			return;
+		}
+		sprintf('WebDAV frontend cache stats (hits/misses): '
 			.'propFind %d/%d, listFiles %d/%d, listFolders %d/%d, getFileInfo %d/%d',
 			$this->cacheHits['propFind'], $this->cacheMisses['propFind'],
 			$this->cacheHits['listFiles'], $this->cacheMisses['listFiles'],
 			$this->cacheHits['listFolders'], $this->cacheMisses['listFolders'],
 			$this->cacheHits['getFileInfo'], $this->cacheMisses['getFileInfo']
-			)
 		);
 	}
 
