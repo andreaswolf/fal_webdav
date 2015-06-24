@@ -299,14 +299,17 @@ class WebDavDriver extends AbstractDriver {
 	}
 
 	/**
-	 * Returns the public URL to a file.
+	 * Returns the public URL to a file. This does not contain a username or password, even if this is
+	 * necessary to display the file.
+	 *
+	 * TODO make it optional to include the username/password
 	 *
 	 * @param string $identifier
 	 * @return string
 	 */
 	public function getPublicUrl($identifier) {
 			// as the storage is marked as public, we can simply use the public URL here.
-		return $this->getResourceUrl($identifier);
+		return $this->baseUrl . ltrim($file, '/');
 	}
 
 	/**
