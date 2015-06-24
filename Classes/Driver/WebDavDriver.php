@@ -309,7 +309,7 @@ class WebDavDriver extends AbstractDriver {
 	 */
 	public function getPublicUrl($identifier) {
 			// as the storage is marked as public, we can simply use the public URL here.
-		return $this->baseUrl . ltrim($file, '/');
+		return $this->baseUrl . ltrim($identifier, '/');
 	}
 
 	/**
