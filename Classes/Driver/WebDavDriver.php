@@ -20,6 +20,7 @@ use Sabre\DAV;
 use TYPO3\CMS\Core\Cache\CacheManager;
 use TYPO3\CMS\Core\Cache\Frontend\FrontendInterface;
 use TYPO3\CMS\Core\Resource\Driver\AbstractDriver;
+use TYPO3\CMS\Core\Resource\Driver\AbstractHierarchicalFilesystemDriver;
 use TYPO3\CMS\Core\Resource\Exception\FileOperationErrorException;
 use TYPO3\CMS\Core\Resource\Exception\FolderDoesNotExistException;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
@@ -34,7 +35,7 @@ use TYPO3\FalWebdav\Utility\EncryptionUtility;
 /**
  * The driver class for WebDAV storages.
  */
-class WebDavDriver extends AbstractDriver {
+class WebDavDriver extends AbstractHierarchicalFilesystemDriver {
 
 	/**
 	 * The base URL of the WebDAV share. Always ends with a trailing slash.
@@ -813,37 +814,6 @@ class WebDavDriver extends AbstractDriver {
 		$folderContents = $this->frontend->propFind($folderIdentifier);
 
 		return (count($folderContents) == 1);
-	}
-
-	/**
-	 * Makes sure the path given as parameter is valid
-	 *
-	 * @param string $filePath The file path (most times filePath)
-	 * @return string
-	 */
-	protected function canonicalizeAndCheckFilePath($filePath) {
-		// TODO: Implement canonicalizeAndCheckFilePath() method.
-	}
-
-	/**
-	 * Makes sure the identifier given as parameter is valid
-	 *
-	 * @param string $fileIdentifier The file Identifier
-	 * @return string
-	 * @throws \TYPO3\CMS\Core\Resource\Exception\InvalidPathException
-	 */
-	protected function canonicalizeAndCheckFileIdentifier($fileIdentifier) {
-		// TODO: Implement canonicalizeAndCheckFileIdentifier() method.
-	}
-
-	/**
-	 * Makes sure the identifier given as parameter is valid
-	 *
-	 * @param string $folderIdentifier The folder identifier
-	 * @return string
-	 */
-	protected function canonicalizeAndCheckFolderIdentifier($folderIdentifier) {
-		// TODO: Implement canonicalizeAndCheckFolderIdentifier() method.
 	}
 
 	/**

@@ -201,10 +201,22 @@ class WebDavFrontend {
 			'name' => basename($path),
 			'size' => (int)$propFindArray['{DAV:}getcontentlength'],
 			'identifier' => '/' . $path,
-			'storage' => $this->storageUid
+			'storage' => $this->storageUid,
+			'identifier_hash' => sha1('/' . $path),
+			'folder_hash' => sha1('/' . $this->getFolderPathFromIdentifier($path)),
 		);
 
 		return $fileInfo;
+	}
+
+	/**
+	 * @param string $path The identifier, without a leading slash!
+	 * @return string The folder path, without a trailing slash. If the file is on root level, an empty string is returned
+	 */
+	protected function getFolderPathFromIdentifier($path) {
+		$dirPath = dirname($path);
+
+		return $dirPath . ($dirPath !== '') ? '/' : '';
 	}
 
 	/**
