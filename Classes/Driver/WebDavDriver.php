@@ -541,8 +541,12 @@ class WebDavDriver extends AbstractDriver {
 		$temporaryPath = GeneralUtility::tempnam('vfs-tempfile-');
 		$fileUrl = $this->getResourceUrl($fileIdentifier);
 
-		$result = $this->executeDavRequest('GET', $fileUrl);
-		file_put_contents($temporaryPath, $result['body']);
+		$fileHandle = fopen($temporaryPath, 'w');
+		$fileUrl = $this->encodeUrl($fileUrl);
+		$this->davClient->readUrlToHandle($fileUrl, $fileHandle);
+
+		// the handle is not closed by readUrlToHandle()!
+		fclose($fileHandle);
 
 		return $temporaryPath;
 	}
